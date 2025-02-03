@@ -1,0 +1,25 @@
+{
+    "videoPath": "videos/jumping.mp4",
+    "timecodeList": [
+        {
+            "text": "A spirited circle, and they’re off!",
+            "time": "00:00",
+            "excitementLevel": 3
+        },
+        {
+            "text": "Synchronized hands, what a start!",
+            "time": "00:03",
+            "excitementLevel": 1
+        },
+        {
+            "text": "They are jumping, the energy is building!",
+            "time": "00:07",
+            "excitementLevel": 2
+        },
+        {
+            "time": "00:10",
+            "text": "Look at that air, pure joy!",
+            "excitementLevel": 4
+        }
+    ]
+}

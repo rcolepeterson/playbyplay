@@ -1,0 +1,31 @@
+{
+    "videoPath": "videos/mixkit-group.mp4",
+    "thumbnail": "thumbnails/partying-happily.jpg",
+    "timecodeList": [
+        {
+            "time": "00:00",
+            "text": "Dancers explode onto the floor!",
+            "excitementLevel": 1
+        },
+        {
+            "text": "Light blue shirt keeps the beat, black takes center stage!",
+            "time": "00:03",
+            "excitementLevel": 1
+        },
+        {
+            "text": "Crowd goes wild, energy is infectious!",
+            "time": "00:09",
+            "excitementLevel": 4
+        },
+        {
+            "text": "This party is off the hook. I wonder what's next?",
+            "time": "00:13",
+            "excitementLevel": 2
+        },
+        {
+            "time": "00:17",
+            "text": "Sunglasses man brings the heat!",
+            "excitementLevel": 4
+        }
+    ]
+}

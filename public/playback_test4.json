@@ -1,0 +1,25 @@
+{
+    "videoPath": "videos/boy_soccer_output_video.mp4",
+    "timecodeList": [
+        {
+            "time": "00:00",
+            "text": "Feet are moving with purpose!",
+            "excitementLevel": 3
+        },
+        {
+            "time": "00:03",
+            "text": "A powerful kick!",
+            "excitementLevel": 1
+        },
+        {
+            "time": "00:06",
+            "text": "Oh no! Not looking good",
+            "excitementLevel": 5
+        },
+        {
+            "text": "It’s in! What a finish!",
+            "time": "00:11",
+            "excitementLevel": 4
+        }
+    ]
+}

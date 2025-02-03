@@ -1,0 +1,20 @@
+{
+    "videoPath": "videos/goal_semi_pro.mp4",
+    "timecodeList": [
+        {
+            "time": "00:00",
+            "text": "Maroon player with the fancy footwork!",
+            "excitementLevel": 1
+        },
+        {
+            "time": "00:03",
+            "text": "Swift direction change!",
+            "excitementLevel": 2
+        },
+        {
+            "text": "AND The shot! It's in!!!!!!",
+            "time": "00:04",
+            "excitementLevel": 4
+        }
+    ]
+}

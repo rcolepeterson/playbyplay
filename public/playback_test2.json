@@ -1,0 +1,30 @@
+{
+    "videoPath": "videos/happy_bday_output_video.mp4",
+    "timecodeList": [
+        {
+            "time": "00:00",
+            "text": "AND here we go, a flurry of excitement!",
+            "excitementLevel": 4
+        },
+        {
+            "text": "Gifts arrive! Gold and red, what a combo!",
+            "time": "00:05",
+            "excitementLevel": 1
+        },
+        {
+            "text": "Cake reveal! One candle, can they contain the joy?",
+            "time": "00:10",
+            "excitementLevel": 1
+        },
+        {
+            "text": "The boy blows out the candle!",
+            "time": "00:16",
+            "excitementLevel": 4
+        },
+        {
+            "time": "00:19",
+            "text": "Pure happiness! Celebration time!",
+            "excitementLevel": 1
+        }
+    ]
+}
