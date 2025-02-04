@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video } from "lucide-react";
 import Image from "next/image";
-import TextToSpeech from "./TextToSpeech";
+//import TextToSpeech from "./TextToSpeech";
+import TextToSpeech from "./TTSEleven";
 
 const premadeExamples = [
   {
