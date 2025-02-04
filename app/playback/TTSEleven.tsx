@@ -1,16 +1,11 @@
-"use client";
 import { useEffect, useRef } from "react";
 import { textToSpeech } from "./11TextSpeech";
 
 interface TextToSpeechProps {
   caption: string;
-  onSpeechEnd: () => void;
 }
 
-export default function TextToSpeech({
-  caption,
-  onSpeechEnd,
-}: TextToSpeechProps) {
+export default function TextToSpeech({ caption }: TextToSpeechProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevCaptionRef = useRef<string | null>(null);
 
@@ -31,11 +26,12 @@ export default function TextToSpeech({
         const audioUrl = URL.createObjectURL(audioBlob);
         audioRef.current.src = audioUrl;
         audioRef.current.play();
-        audioRef.current.onended = onSpeechEnd;
+        audioRef.current.onended = () => {
+          console.log("Speech ended");
+        };
       }
     } catch (error) {
       console.error("Error during speech synthesis:", error);
-      onSpeechEnd();
     }
   };
 

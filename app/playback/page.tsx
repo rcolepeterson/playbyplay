@@ -121,7 +121,7 @@ export default function ImprovedPlayback() {
   }, [updateCurrentMoment]);
 
   const handlePause = useCallback(() => setIsPlaying(false), []);
-  const handleSpeechEnd = useCallback(() => setIsSpeaking(false), []);
+  //const handleSpeechEnd = useCallback(() => setIsSpeaking(false), []);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -212,7 +212,7 @@ export default function ImprovedPlayback() {
         <TextToSpeech
           key={`${key}-${currentMoment.time}`}
           caption={currentMoment.text}
-          onSpeechEnd={handleSpeechEnd}
+          //onSpeechEnd={handleSpeechEnd}
         />
       )}
       <div>
