@@ -208,7 +208,7 @@ export default function ImprovedPlayback() {
           </CardContent>
         </Card>
       </div>
-      {currentMoment && isSpeaking && (
+      {currentMoment && isPlaying && isSpeaking && (
         <TextToSpeech
           key={`${key}-${currentMoment.time}`}
           caption={currentMoment.text}
