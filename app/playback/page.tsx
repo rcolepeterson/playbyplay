@@ -208,11 +208,10 @@ export default function ImprovedPlayback() {
           </CardContent>
         </Card>
       </div>
-      {currentMoment && isPlaying && isSpeaking && (
+      {currentMoment && isSpeaking && (
         <TextToSpeech
           key={`${key}-${currentMoment.time}`}
           caption={currentMoment.text}
-          //   excitementLevel={currentMoment.excitementLevel}
           onSpeechEnd={handleSpeechEnd}
         />
       )}
