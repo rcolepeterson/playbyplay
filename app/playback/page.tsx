@@ -212,7 +212,7 @@ export default function ImprovedPlayback() {
         <TextToSpeech
           key={`${key}-${currentMoment.time}`}
           caption={currentMoment.text}
-          excitementLevel={currentMoment.excitementLevel}
+          //   excitementLevel={currentMoment.excitementLevel}
           onSpeechEnd={handleSpeechEnd}
         />
       )}
