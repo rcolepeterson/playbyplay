@@ -18,8 +18,19 @@ Examples of energetic commentary:
 - "The tension is building, folks! The crowd's on their feet!"
 - "Unbelievable! A moment of pure brilliance! History in the making!"`;
 
-const filterInstruction = `Review and optimize the commentary while maintaining the high-energy, sports-style tone:
+const filterInstruction = `Review and optimize the following JSON commentary array, keeping the high-energy, sports-style tone. Return the result as a strict JSON array in the same format, with each entry containing:
+- time (mm:ss)
+- text (10-15 words, vivid, energetic, and unique)
+- excitementLevel (1-5, integer)
 
+Do not include any explanation, markdown, or extra text—just the JSON array. Example:
+[
+  {"time": "00:00", "text": "And we're off! The maroon team surges forward!", "excitementLevel": 3},
+  {"time": "00:03", "text": "A brilliant pass! The crowd is on their feet!", "excitementLevel": 4},
+  {"time": "00:07", "text": "GOAL! What a strike!", "excitementLevel": 5}
+]
+
+Guidelines:
 1. Ensure each moment is described with maximum excitement and vivid detail, keeping comments brief (10-15 words).
 2. Use varied sports commentary phrases and transitions, avoiding repetition.
 3. Provide 3-4 comments for a 15-second video, adjusting for longer or shorter videos.
@@ -45,26 +56,114 @@ const filterInstruction = `Review and optimize the commentary while maintaining 
 console.log("GEMINI_API_KEY from env:", process.env.GEMINI_API_KEY);
 const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const prompt = `Provide energetic, high-energy play-by-play commentary for this sports video, similar to a live broadcast. For each significant event, describe the action in an exciting way, including the timecode of the moment. 
+const prompt = `Provide energetic, high-energy play-by-play commentary for this sports video, similar to a live broadcast. For each significant event, describe the action in an exciting way, including the timecode of the moment.
 
-1. **Fast-paced content**: Limit the number of key moments to 4-6 for a 10-15 second video. Provide concise commentary (1-2 sentences) while maintaining excitement. 
-2. **Slow-paced content**: For fewer actions, provide 3-4 sentences of detailed commentary.
-3. **Timing and Clarity**: Ensure each commentary entry fits naturally into the time available, with enough gap between each to avoid crowding. Adjust the speech rate as needed based on the event's length to maintain clarity and smooth delivery.
-4. **Output**: Each commentary entry should include a timecode and the associated commentary text. The commentary will be processed for TTS integration, ensuring it matches the video playback.`;
+Return the result as a strict JSON array, with each entry in the following format:
+{
+  "time": "mm:ss", // time of the moment in minutes and seconds
+  "text": "Exciting commentary for this moment",
+  "excitementLevel": 1 // integer from 1 (least) to 5 (most exciting)
+}
 
-const parseTimecodesFromText = (text) => {
-  const timecodeRegex = /(\d{2}:\d{2})\s(.+)/g;
-  const timecodes = [];
-  let match;
-  while ((match = timecodeRegex.exec(text)) !== null) {
-    timecodes.push({
-      time: match[1],
-      text: match[2],
-      excitementLevel: Math.floor(Math.random() * 5) + 1, // Temporary random assignment
-    });
+Example:
+[
+  {"time": "00:00", "text": "And we're off! The maroon team surges forward!", "excitementLevel": 3},
+  {"time": "00:03", "text": "A brilliant pass! The crowd is on their feet!", "excitementLevel": 4},
+  {"time": "00:07", "text": "GOAL! What a strike!", "excitementLevel": 5}
+]
+
+Do not include any explanation, markdown, or extra text—just the JSON array. The commentary will be processed for TTS integration, ensuring it matches the video playback.`;
+
+function extractTimecodes(textOrObj) {
+  // Accepts either a string (Gemini output) or a Gemini response object
+  let text = textOrObj;
+  // If passed a Gemini response object, extract the .text property if present
+  if (typeof textOrObj === "object" && textOrObj !== null) {
+    // Try to find .text property in candidates[0].content.parts[0].text
+    try {
+      if (textOrObj.candidates?.[0]?.content?.parts?.[0]?.text) {
+        text = textOrObj.candidates[0].content.parts[0].text;
+      } else if (
+        textOrObj.candidates?.[0]?.content?.parts?.[0]?.functionCall?.args
+          ?.timecodes
+      ) {
+        // Already parsed timecodes
+        return textOrObj.candidates[0].content.parts[0].functionCall.args
+          .timecodes;
+      } else {
+        // Fallback: try to find any string property
+        const str = JSON.stringify(textOrObj);
+        text = str;
+      }
+    } catch {
+      text = JSON.stringify(textOrObj);
+    }
   }
-  return timecodes;
-};
+  if (typeof text !== "string") text = String(text);
+
+  // Try to extract JSON code block first
+  const jsonBlockMatch = text.match(/```json([\s\S]*?)```/);
+  let jsonText = null;
+  if (jsonBlockMatch) {
+    jsonText = jsonBlockMatch[1].trim();
+  } else if (text.trim().startsWith("[")) {
+    // Plain JSON array
+    jsonText = text.trim();
+  } else {
+    // Try to extract JSON from a code block without json tag
+    const codeBlockMatch = text.match(/```([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonText = codeBlockMatch[1].trim();
+    }
+  }
+  if (jsonText) {
+    try {
+      const arr = JSON.parse(jsonText);
+      if (Array.isArray(arr)) return arr;
+    } catch {
+      // fall through to regex
+    }
+  }
+  // Fallback: line-based extraction (Markdown, plaintext, etc)
+  const lines = text.split("\n");
+  const regex =
+    /(?:\*\*)?\[?(\d{2}:(?:\d{2}:)?\d{2})\]?\*\*?\s*[:\-]?\s*["“”']?(.*?)(?:["“”']|$)/;
+  const results = lines
+    .map((line) => {
+      const match = line.match(regex);
+      if (match) {
+        let time = match[1];
+        if (time.length === 5) {
+          // mm:ss
+        } else if (time.length === 8) {
+          time = time.slice(3); // hh:mm:ss -> mm:ss
+        }
+        let text = match[2].trim();
+        // Remove trailing punctuation-only lines
+        if (!text || /^[.?!,:;-]+$/.test(text)) return null;
+        return {
+          time,
+          text,
+          excitementLevel: Math.floor(Math.random() * 5) + 1,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+  if (results.length > 0) return results;
+
+  // Fallback: try to extract JSON array from anywhere in the text
+  const arrMatch = text.match(/\[\s*{[\s\S]*?}\s*\]/);
+  if (arrMatch) {
+    try {
+      const arr = JSON.parse(arrMatch[0]);
+      if (Array.isArray(arr)) return arr;
+    } catch {}
+  }
+
+  // If all else fails, return empty array
+  return [];
+}
 
 function stripFunctions(obj) {
   if (Array.isArray(obj)) {
@@ -84,7 +183,7 @@ function stripFunctions(obj) {
 const DEBUG_MODE = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
 
 // eslint-disable-next-line import/no-anonymous-default-export
-export default async ({ functionDeclarations, file }) => {
+export default async ({ file }) => {
   if (DEBUG_MODE) {
     // Debug mode: return hardcoded JSON and indicate debug is active
     console.log("[DEBUG] Returning hardcoded commentary (debug mode ON)");
@@ -172,7 +271,7 @@ export default async ({ functionDeclarations, file }) => {
     // First API call
     const initialResponse = await client
       .getGenerativeModel(
-        { model: "gemini-2.0-flash-exp", systemInstruction },
+        { model: "gemini-1.5-flash", systemInstruction },
         { apiVersion: "v1beta" }
       )
       .generateContent({
@@ -193,7 +292,6 @@ export default async ({ functionDeclarations, file }) => {
           },
         ],
         generationConfig: { temperature: 0.7 },
-        tools: [{ functionDeclarations }],
       });
 
     console.log(
@@ -230,22 +328,19 @@ export default async ({ functionDeclarations, file }) => {
             initialTimecodes
           );
         } else {
-          initialTimecodes = parseTimecodesFromText(initialRawText);
+          initialTimecodes = extractTimecodes(initialRawText);
           console.log(
             "[DEBUG] Extracted initial timecodes from text:",
             initialTimecodes
           );
         }
-      } catch (e) {
+      } catch {
         console.error(
           "Error parsing JSON:",
-          e,
           "\n[DEBUG] Initial raw text:",
           initialRawText
         );
-        throw new Error(
-          `Failed to extract initial timecodes - Invalid JSON: ${e.message}`
-        );
+        throw new Error(`Failed to extract initial timecodes - Invalid JSON.`);
       }
     }
 
@@ -263,7 +358,7 @@ export default async ({ functionDeclarations, file }) => {
       optimizeResponse = await client
         .getGenerativeModel(
           {
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-1.5-flash",
             systemInstruction: filterInstruction,
           },
           { apiVersion: "v1beta" }
@@ -288,14 +383,13 @@ export default async ({ functionDeclarations, file }) => {
             },
           ],
           generationConfig: { temperature: 0.7 },
-          tools: [{ functionDeclarations }],
         });
       console.log(
         "[DEBUG] Optimize Gemini response:",
         JSON.stringify(optimizeResponse, null, 2)
       );
-    } catch (e) {
-      console.error("Error during optimize Gemini call:", e);
+    } catch {
+      console.error("Error during optimize Gemini call:");
       optimizeResponse = null;
     }
 
@@ -310,11 +404,34 @@ export default async ({ functionDeclarations, file }) => {
         optimizeResponse.response.candidates[0].finishReason !==
           "MALFORMED_FUNCTION_CALL"
       ) {
-        optimizedTimecodes = extractTimecodes(optimizeResponse.response);
-        console.log(
-          "[DEBUG] Extracted optimized timecodes:",
-          optimizedTimecodes
-        );
+        // Robustly extract the .text property if present, else fallback to full response
+        let optimizedRawText = null;
+        const parts = optimizeResponse.response.candidates[0].content.parts;
+        if (Array.isArray(parts) && parts[0]?.text) {
+          optimizedRawText = parts[0].text.trim();
+        } else if (
+          typeof optimizeResponse.response.candidates[0].content.text ===
+          "string"
+        ) {
+          optimizedRawText =
+            optimizeResponse.response.candidates[0].content.text.trim();
+        }
+        if (optimizedRawText) {
+          optimizedTimecodes = extractTimecodes(optimizedRawText);
+          console.log(
+            "[DEBUG] Extracted optimized timecodes from .text:",
+            optimizedTimecodes
+          );
+        } else {
+          // Fallback: try to extract from the whole content object as string
+          optimizedTimecodes = extractTimecodes(
+            JSON.stringify(optimizeResponse.response.candidates[0].content)
+          );
+          console.log(
+            "[DEBUG] Extracted optimized timecodes from content object:",
+            optimizedTimecodes
+          );
+        }
       } else {
         // Fallback: use initial timecodes if optimize step failed or was malformed
         optimizedTimecodes = initialTimecodes;
@@ -323,7 +440,7 @@ export default async ({ functionDeclarations, file }) => {
           optimizedTimecodes
         );
       }
-    } catch (e) {
+    } catch {
       // Fallback: use initial timecodes if extraction fails
       optimizedTimecodes = initialTimecodes;
       console.log(
