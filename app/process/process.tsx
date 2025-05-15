@@ -2,12 +2,10 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 
 import modes from "./modes";
-import { timeToSecs } from "./utils";
 import generateContent from "./api";
-import functions from "./functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import TextToSpeech from "../playback/TTSEleven";
+import PreloadedTTSPlayer from "./PreloadedTTSPlayer";
 
 // TypeScript interfaces for timecodes and file
 interface Timecode {
@@ -38,16 +36,6 @@ export default function Process() {
   const [theme] = useState("dark");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLElement | null>(null);
-  const [currentMoment, setCurrentMoment] = useState<Timecode | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const currentMomentIndexRef = useRef<number>(-1);
-
-  const setTimecodes = ({ timecodes }: { timecodes: Timecode[] }) =>
-    setTimecodeList(
-      timecodes.map((t) => ({ ...t, text: t.text.replaceAll("\\'", "'") }))
-    );
 
   const onModeSelect = async (mode: keyof typeof modes) => {
     setActiveMode(mode);
@@ -60,18 +48,7 @@ export default function Process() {
       return;
     }
     try {
-      const resp = await generateContent({
-        functionDeclarations: functions({
-          set_timecodes: setTimecodes,
-          set_timecodes_with_objects: setTimecodes,
-          set_timecodes_with_numeric_values: ({
-            timecodes,
-          }: {
-            timecodes: Timecode[];
-          }) => setTimecodeList(timecodes),
-        }),
-        file,
-      });
+      const resp = await generateContent({ file });
       if (resp.optimizedTimecodes) {
         setTimecodeList(
           resp.optimizedTimecodes.map((t: Timecode) => ({
@@ -202,62 +179,49 @@ export default function Process() {
     alert("Key moments have been downloaded.");
   };
 
-  // Helper to jump to a timecode
-  const jumpToTimecode = (time: string) => {
-    const [minutes, seconds] = time.split(":").map(Number.parseFloat);
-    const timeInSeconds = minutes * 60 + seconds;
-    if (videoRef.current && !isNaN(timeInSeconds) && isFinite(timeInSeconds)) {
-      videoRef.current.currentTime = timeInSeconds;
-      videoRef.current.play();
-    }
-  };
-
-  // Update current moment based on video time
-  const updateCurrentMoment = useCallback(() => {
-    if (videoRef.current && timecodeList && timecodeList.length > 0) {
-      const currentTime = videoRef.current.currentTime;
-      const nextIndex = timecodeList.findIndex((timecode, index) => {
-        return (
-          index > currentMomentIndexRef.current &&
-          timeToSecs(timecode.time) <= currentTime
-        );
-      });
-      if (nextIndex !== -1 && nextIndex !== currentMomentIndexRef.current) {
-        currentMomentIndexRef.current = nextIndex;
-        setCurrentMoment(timecodeList[nextIndex]);
-        setIsSpeaking(true);
-      }
-    }
-  }, [timecodeList]);
-
-  const handlePlay = useCallback(() => {
-    setIsPlaying(true);
-    currentMomentIndexRef.current = -1;
-    updateCurrentMoment();
-  }, [updateCurrentMoment]);
-
-  const handlePause = useCallback(() => setIsPlaying(false), []);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener("loadeddata", updateCurrentMoment);
-      videoRef.current.addEventListener("timeupdate", updateCurrentMoment);
-      videoRef.current.addEventListener("play", handlePlay);
-      videoRef.current.addEventListener("pause", handlePause);
-      return () => {
-        videoRef.current?.removeEventListener(
-          "loadeddata",
-          updateCurrentMoment
-        );
-        videoRef.current?.removeEventListener(
-          "timeupdate",
-          updateCurrentMoment
-        );
-        videoRef.current?.removeEventListener("play", handlePlay);
-        videoRef.current?.removeEventListener("pause", handlePause);
-      };
-    }
-  }, [updateCurrentMoment, handlePlay, handlePause]);
+  // Only show PreloadedTTSPlayer if video and timecodes are ready
+  if (vidUrl && timecodeList && timecodeList.length > 0) {
+    return (
+      <main className={`${theme} min-h-screen bg-background text-foreground`}>
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <h1 className="text-4xl font-bold mb-4 text-center">
+            Video Play-by-Play Generator
+          </h1>
+          <p className="text-xl mb-8 text-center">
+            Upload your video and get instant play-by-play commentary. Analyze
+            key moments, generate summaries, and more!
+          </p>
+          <PreloadedTTSPlayer videoUrl={vidUrl} timecodes={timecodeList} />
+          <div className="flex flex-row gap-4 justify-center mb-8 mt-4">
+            <Button
+              onClick={downloadKeyMoments}
+              disabled={!timecodeList}
+              className="px-6 py-2 text-base font-semibold"
+            >
+              Download Key Moments (JSON)
+            </Button>
+          </div>
+          <section className="output mt-4">
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-bold mb-2">Key Moments</h2>
+              <div className="w-16 h-1 bg-accent rounded mb-6" />
+            </div>
+            <ul className="space-y-2">
+              {timecodeList.map((timecode, i) => (
+                <li
+                  key={i}
+                  className="p-2 rounded cursor-pointer transition-colors duration-200 hover:bg-secondary"
+                >
+                  <span className="font-semibold">{timecode.time}</span> -{" "}
+                  {timecode.text}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -311,7 +275,6 @@ export default function Process() {
             <div className="flex flex-col items-center">
               <div className="w-full rounded-lg shadow-lg overflow-hidden mb-6 bg-black">
                 <video
-                  ref={videoRef}
                   src={vidUrl}
                   controls
                   className="w-full rounded-lg shadow-lg"
@@ -353,12 +316,7 @@ export default function Process() {
                 {timecodeList.map((timecode, i) => (
                   <li
                     key={i}
-                    onClick={() => jumpToTimecode(timecode.time)}
-                    className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
-                      currentMoment === timecode
-                        ? "bg-primary text-primary-foreground bg-yellow-300"
-                        : "hover:bg-secondary"
-                    }`}
+                    className={`p-2 rounded cursor-pointer transition-colors duration-200 hover:bg-secondary`}
                   >
                     <span className="font-semibold">{timecode.time}</span> -{" "}
                     {timecode.text}
@@ -367,9 +325,6 @@ export default function Process() {
               </ul>
             ) : null}
           </section>
-        )}
-        {currentMoment && isPlaying && isSpeaking && (
-          <TextToSpeech key={currentMoment.time} caption={currentMoment.text} />
         )}
       </div>
     </main>
