@@ -338,7 +338,7 @@ export default function Process() {
         )}
 
         {/* Commentary output section - only show once, below video */}
-        {vidUrl && (
+        {vidUrl && ((timecodeList && timecodeList.length > 0) || isLoading) && (
           <section className="output mt-4" ref={scrollRef}>
             <div className="flex flex-col items-center">
               <h2 className="text-2xl font-bold mb-2">Key Moments</h2>
