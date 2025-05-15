@@ -110,7 +110,11 @@ export default function VideoPlayer({
               onTimeUpdate={updateTime}
               onPlay={onPlay}
               onPause={onPause}
-              style={{ width: "100%", borderRadius: "0.5rem", background: "black" }}
+              style={{
+                width: "100%",
+                borderRadius: "0.5rem",
+                background: "black",
+              }}
             />
             {currentCaption && (
               <div className="videoCaption">{currentCaption}</div>
