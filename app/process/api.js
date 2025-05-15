@@ -101,17 +101,17 @@ export default async ({ functionDeclarations, file }) => {
                     args: {
                       timecodes: [
                         {
-                          text: "Maroon team bursts out! A speedy start! (Excitement Level: 3)",
+                          text: "Maroon team bursts out! A speedy start!",
                           time: "00:00",
                           excitementLevel: 3,
                         },
                         {
-                          text: "Blue team intercepts! Can they turn the tide? (Excitement Level: 4)",
+                          text: "Blue team intercepts! Can they turn the tide?",
                           time: "00:03",
                           excitementLevel: 4,
                         },
                         {
-                          text: "YES! GOAL! Blue team scores! The crowd erupts! (Excitement Level: 5)",
+                          text: "YES! GOAL! Blue team scores! The crowd erupts!",
                           time: "00:07",
                           excitementLevel: 5,
                         },
@@ -133,9 +133,9 @@ export default async ({ functionDeclarations, file }) => {
               parts: [
                 {
                   text: `[
-  {"time": "00:00", "text": "Maroon team explodes off the mark! (Excitement Level: 2)", "excitementLevel": 2},
-  {"time": "00:03", "text": "Dribbling masterclass! Blue team scrambling! (Excitement Level: 4)", "excitementLevel": 4},
-  {"time": "00:06", "text": "He shoots! Is it going in?! (Excitement Level: 5)", "excitementLevel": 5}
+  {"time": "00:00", "text": "Maroon team explodes off the mark!", "excitementLevel": 2},
+  {"time": "00:03", "text": "Dribbling masterclass! Blue team scrambling!", "excitementLevel": 4},
+  {"time": "00:06", "text": "He shoots! Is it going in?!", "excitementLevel": 5}
 ]`,
                 },
               ],
@@ -148,17 +148,17 @@ export default async ({ functionDeclarations, file }) => {
       optimizedTimecodes: [
         {
           time: "00:00",
-          text: "Maroon team explodes off the mark! (Excitement Level: 2)",
+          text: "Maroon team explodes off the mark!",
           excitementLevel: 2,
         },
         {
           time: "00:03",
-          text: "Dribbling masterclass! Blue team scrambling! (Excitement Level: 4)",
+          text: "Dribbling masterclass! Blue team scrambling!",
           excitementLevel: 4,
         },
         {
           time: "00:06",
-          text: "He shoots! Is it going in?! (Excitement Level: 5)",
+          text: "He shoots! Is it going in?!",
           excitementLevel: 5,
         },
       ],
@@ -203,6 +203,7 @@ export default async ({ functionDeclarations, file }) => {
 
     // Extract timecodes from the initial response
     let initialTimecodes;
+    let initialRawText = null;
     if (
       initialResponse.response?.candidates?.[0]?.content?.parts?.[0]
         ?.functionCall?.args?.timecodes
@@ -210,140 +211,139 @@ export default async ({ functionDeclarations, file }) => {
       initialTimecodes =
         initialResponse.response.candidates[0].content.parts[0].functionCall
           .args.timecodes;
+      console.log(
+        "[DEBUG] Extracted initial timecodes from functionCall:",
+        initialTimecodes
+      );
     } else if (
       initialResponse.response?.candidates?.[0]?.content?.parts?.[0]?.text
     ) {
       try {
-        const rawText =
+        initialRawText =
           initialResponse.response.candidates[0].content.parts[0].text.trim();
-        if (rawText.startsWith("```json")) {
-          const jsonText = rawText.replace(/```json|```/g, "").trim();
+        console.log("[DEBUG] Initial raw text:", initialRawText);
+        if (initialRawText.startsWith("```json")) {
+          const jsonText = initialRawText.replace(/```json|```/g, "").trim();
           initialTimecodes = JSON.parse(jsonText);
+          console.log(
+            "[DEBUG] Extracted initial timecodes from JSON code block:",
+            initialTimecodes
+          );
         } else {
-          initialTimecodes = parseTimecodesFromText(rawText);
+          initialTimecodes = parseTimecodesFromText(initialRawText);
+          console.log(
+            "[DEBUG] Extracted initial timecodes from text:",
+            initialTimecodes
+          );
         }
       } catch (e) {
-        console.error("Error parsing JSON:", e);
+        console.error(
+          "Error parsing JSON:",
+          e,
+          "\n[DEBUG] Initial raw text:",
+          initialRawText
+        );
         throw new Error(
           `Failed to extract initial timecodes - Invalid JSON: ${e.message}`
         );
       }
     }
 
-    if (!initialTimecodes) {
+    if (!initialTimecodes || initialTimecodes.length === 0) {
+      console.error(
+        "[DEBUG] No initial timecodes found. Full initial response:",
+        JSON.stringify(initialResponse, null, 2)
+      );
       throw new Error("Failed to extract initial timecodes from AI response");
     }
 
     // Second API call to filter and optimize the response
-    const optimizeResponse = await client
-      .getGenerativeModel(
-        { model: "gemini-2.0-flash-exp", systemInstruction: filterInstruction },
-        { apiVersion: "v1beta" }
-      )
-      .generateContent({
-        contents: [
+    let optimizeResponse;
+    try {
+      optimizeResponse = await client
+        .getGenerativeModel(
           {
-            role: "user",
-            parts: [
-              {
-                text: `Optimize the following commentary, focusing on the most important moments and ensuring no overlap. The video duration is ${
-                  file.duration
-                } seconds. Ensure the commentary captures any significant events, especially those occurring near the end of the video (around ${Math.floor(
-                  file.duration * 0.8
-                )} to ${
-                  file.duration
-                } seconds). Assign appropriate excitement levels (1-5) to each comment based on the significance of the event. Provide specific, detailed commentary that accurately reflects the events in the video:
-                ${JSON.stringify(initialTimecodes)}`,
-              },
-            ],
+            model: "gemini-2.0-flash-exp",
+            systemInstruction: filterInstruction,
           },
-        ],
-        generationConfig: { temperature: 0.7 },
-        tools: [{ functionDeclarations }],
-      });
+          { apiVersion: "v1beta" }
+        )
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Optimize the following commentary, focusing on the most important moments and ensuring no overlap. The video duration is ${
+                    file.duration
+                  } seconds. Ensure the commentary captures any significant events, especially those occurring near the end of the video (around ${Math.floor(
+                    file.duration * 0.8
+                  )} to ${
+                    file.duration
+                  } seconds). Assign appropriate excitement levels (1-5) to each comment based on the significance of the event. Provide specific, detailed commentary that accurately reflects the events in the video:\n${JSON.stringify(
+                    initialTimecodes
+                  )}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: { temperature: 0.7 },
+          tools: [{ functionDeclarations }],
+        });
+      console.log(
+        "[DEBUG] Optimize Gemini response:",
+        JSON.stringify(optimizeResponse, null, 2)
+      );
+    } catch (e) {
+      console.error("Error during optimize Gemini call:", e);
+      optimizeResponse = null;
+    }
 
-    console.log(
-      "Optimized AI Response:",
-      JSON.stringify(optimizeResponse, null, 2)
-    );
-
-    // Extract the optimized timecodes
-    const extractTimecodes = (response) => {
-      if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall?.args) {
-        return response.candidates[0].content.parts[0].functionCall.args.timecodes.map(
-          (timecode) => ({
-            ...timecode,
-            excitementLevel: Math.floor(Math.random() * 5) + 1, // Temporary random assignment
-          })
+    // Extract the optimized timecodes with robust fallback
+    let optimizedTimecodes;
+    try {
+      if (
+        optimizeResponse &&
+        optimizeResponse.response?.candidates?.[0]?.content &&
+        Object.keys(optimizeResponse.response.candidates[0].content).length >
+          0 &&
+        optimizeResponse.response.candidates[0].finishReason !==
+          "MALFORMED_FUNCTION_CALL"
+      ) {
+        optimizedTimecodes = extractTimecodes(optimizeResponse.response);
+        console.log(
+          "[DEBUG] Extracted optimized timecodes:",
+          optimizedTimecodes
         );
-      } else if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        try {
-          const rawText = response.candidates[0].content.parts[0].text.trim();
-          // Extract JSON code block if present
-          const match = rawText.match(/```json\s*([\s\S]*?)```/i);
-          if (!match) {
-            // Try to find a functionCall with timecodes in any candidate/part
-            const candidates = response?.candidates;
-            if (candidates) {
-              for (const candidate of candidates) {
-                const parts = candidate?.content?.parts;
-                if (parts) {
-                  for (const part of parts) {
-                    if (
-                      part.functionCall &&
-                      part.functionCall.args &&
-                      part.functionCall.args.timecodes
-                    ) {
-                      return part.functionCall.args.timecodes;
-                    }
-                  }
-                }
-              }
-            }
-            // ...existing fallback logic...
-            const anyBlock = rawText.match(/```[\s\S]*?```/);
-            if (anyBlock) {
-              const blockContent = anyBlock[0]
-                .replace(/```[a-zA-Z]*|```/g, "")
-                .trim();
-              return JSON.parse(blockContent);
-            }
-            const firstBracket = rawText.search(/[\[{]/);
-            if (firstBracket !== -1) {
-              const possibleJson = rawText.slice(firstBracket);
-              return JSON.parse(possibleJson);
-            }
-            throw new Error(
-              "No JSON code block or functionCall with timecodes found in Gemini response"
-            );
-          }
-          const jsonText = match[1];
-          const parsedTimecodes = JSON.parse(jsonText);
-          if (parsedTimecodes.timecodes) return parsedTimecodes.timecodes;
-          if (Array.isArray(parsedTimecodes)) return parsedTimecodes;
-          return parsedTimecodes;
-        } catch (e) {
-          console.error("Error parsing JSON:", e);
-          throw new Error(
-            `Failed to extract timecodes - Invalid JSON: ${e.message}`
-          );
-        }
       } else {
-        throw new Error(
-          "Failed to extract timecodes - Unexpected response format"
+        // Fallback: use initial timecodes if optimize step failed or was malformed
+        optimizedTimecodes = initialTimecodes;
+        console.log(
+          "[DEBUG] Fallback to initial timecodes:",
+          optimizedTimecodes
         );
       }
-    };
+    } catch (e) {
+      // Fallback: use initial timecodes if extraction fails
+      optimizedTimecodes = initialTimecodes;
+      console.log(
+        "[DEBUG] Exception in optimized timecodes extraction, fallback to initial:",
+        optimizedTimecodes
+      );
+    }
 
-    // Extract the optimized timecodes
-    const optimizedTimecodes = extractTimecodes(optimizeResponse.response);
-
-    if (!optimizedTimecodes) {
-      throw new Error("Failed to extract optimized timecodes from AI response");
+    if (!optimizedTimecodes || optimizedTimecodes.length === 0) {
+      console.error(
+        "[DEBUG] No optimized timecodes found. Full optimize response:",
+        JSON.stringify(optimizeResponse, null, 2)
+      );
+      throw new Error(
+        "AI could not generate commentary for this video. Please try again or use a different video."
+      );
     }
 
     const safeInitialResponse = stripFunctions(initialResponse.response);
-    const safeOptimizeResponse = stripFunctions(optimizeResponse.response);
+    const safeOptimizeResponse = stripFunctions(optimizeResponse?.response);
 
     return stripFunctions({
       initialResponse: safeInitialResponse,

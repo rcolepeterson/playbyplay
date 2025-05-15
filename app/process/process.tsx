@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import c from "classnames";
 import VideoPlayer from "./VideoPlayer.jsx";
 import modes from "./modes";
@@ -8,6 +8,7 @@ import generateContent from "./api";
 import functions from "./functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import TextToSpeech from "../playback/TTSEleven";
 
 // TypeScript interfaces for timecodes and file
 interface Timecode {
@@ -41,6 +42,11 @@ export default function Process() {
   const [theme] = useState("dark");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLElement | null>(null);
+  const [currentMoment, setCurrentMoment] = useState<Timecode | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const currentMomentIndexRef = useRef<number>(-1);
 
   const setTimecodes = ({ timecodes }: { timecodes: Timecode[] }) =>
     setTimecodeList(
@@ -199,6 +205,63 @@ export default function Process() {
     alert("Key moments have been downloaded.");
   };
 
+  // Helper to jump to a timecode
+  const jumpToTimecode = (time: string) => {
+    const [minutes, seconds] = time.split(":").map(Number.parseFloat);
+    const timeInSeconds = minutes * 60 + seconds;
+    if (videoRef.current && !isNaN(timeInSeconds) && isFinite(timeInSeconds)) {
+      videoRef.current.currentTime = timeInSeconds;
+      videoRef.current.play();
+    }
+  };
+
+  // Update current moment based on video time
+  const updateCurrentMoment = useCallback(() => {
+    if (videoRef.current && timecodeList && timecodeList.length > 0) {
+      const currentTime = videoRef.current.currentTime;
+      const nextIndex = timecodeList.findIndex((timecode, index) => {
+        return (
+          index > currentMomentIndexRef.current &&
+          timeToSecs(timecode.time) <= currentTime
+        );
+      });
+      if (nextIndex !== -1 && nextIndex !== currentMomentIndexRef.current) {
+        currentMomentIndexRef.current = nextIndex;
+        setCurrentMoment(timecodeList[nextIndex]);
+        setIsSpeaking(true);
+      }
+    }
+  }, [timecodeList]);
+
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
+    currentMomentIndexRef.current = -1;
+    updateCurrentMoment();
+  }, [updateCurrentMoment]);
+
+  const handlePause = useCallback(() => setIsPlaying(false), []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.addEventListener("loadeddata", updateCurrentMoment);
+      videoRef.current.addEventListener("timeupdate", updateCurrentMoment);
+      videoRef.current.addEventListener("play", handlePlay);
+      videoRef.current.addEventListener("pause", handlePause);
+      return () => {
+        videoRef.current?.removeEventListener(
+          "loadeddata",
+          updateCurrentMoment
+        );
+        videoRef.current?.removeEventListener(
+          "timeupdate",
+          updateCurrentMoment
+        );
+        videoRef.current?.removeEventListener("play", handlePlay);
+        videoRef.current?.removeEventListener("pause", handlePause);
+      };
+    }
+  }, [updateCurrentMoment, handlePlay, handlePause]);
+
   return (
     <main
       className={`${theme} min-h-screen bg-background text-foreground`}
@@ -242,13 +305,11 @@ export default function Process() {
           <>
             <div className="flex flex-col items-center">
               <div className="w-full rounded-lg shadow-lg overflow-hidden mb-6 bg-black">
-                <VideoPlayer
-                  url={vidUrl}
-                  requestedTimecode={requestedTimecode}
-                  timecodeList={timecodeList}
-                  jumpToTimecode={setRequestedTimecode}
-                  isLoadingVideo={isLoadingVideo}
-                  videoError={videoError}
+                <video
+                  ref={videoRef}
+                  src={vidUrl}
+                  controls
+                  className="w-full rounded-lg shadow-lg"
                 />
               </div>
               <div className="flex flex-row gap-4 justify-center mb-8">
@@ -282,41 +343,28 @@ export default function Process() {
               <div className="loading text-center">
                 Waiting for model<span>...</span>
               </div>
-            ) : timecodeList ? (
-              timecodeList.length === 1 ? (
-                <div className="singleMoment flex flex-col items-center">
-                  <span
-                    className="sentence cursor-pointer hover:bg-accent rounded p-2 transition"
-                    role="button"
-                    onClick={() =>
-                      setRequestedTimecode(timeToSecs(timecodeList[0].time))
-                    }
+            ) : timecodeList && timecodeList.length > 0 ? (
+              <ul className="space-y-2">
+                {timecodeList.map((timecode, i) => (
+                  <li
+                    key={i}
+                    onClick={() => jumpToTimecode(timecode.time)}
+                    className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
+                      currentMoment === timecode
+                        ? "bg-primary text-primary-foreground bg-yellow-300"
+                        : "hover:bg-secondary"
+                    }`}
                   >
-                    <time className="font-mono mr-2">
-                      {timecodeList[0].time}
-                    </time>
-                    <span>{timecodeList[0].text}</span>
-                  </span>
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {timecodeList.map(({ time, text }, i) => (
-                    <li key={i} className="outputItem">
-                      <button
-                        className="w-full text-left hover:bg-accent rounded p-2 transition font-medium"
-                        onClick={() => setRequestedTimecode(timeToSecs(time))}
-                      >
-                        <time className="font-mono mr-2 text-primary">
-                          {time}
-                        </time>
-                        <span>{text}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )
+                    <span className="font-semibold">{timecode.time}</span> -{" "}
+                    {timecode.text}
+                  </li>
+                ))}
+              </ul>
             ) : null}
           </section>
+        )}
+        {currentMoment && isPlaying && isSpeaking && (
+          <TextToSpeech key={currentMoment.time} caption={currentMoment.text} />
         )}
       </div>
     </main>
