@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState, useCallback, useEffect } from "react";
-import c from "classnames";
-import VideoPlayer from "./VideoPlayer.jsx";
+
 import modes from "./modes";
 import { timeToSecs } from "./utils";
 import generateContent from "./api";
@@ -27,16 +26,13 @@ export default function Process() {
   const [vidUrl, setVidUrl] = useState<string | null>(null);
   const [file, setFile] = useState<UploadedFile | null>(null);
   const [timecodeList, setTimecodeList] = useState<Timecode[] | null>(null);
-  const [requestedTimecode, setRequestedTimecode] = useState<number | null>(
-    null
-  );
-  const [selectedMode, setSelectedMode] =
-    useState<keyof typeof modes>("Key moments");
+  const selectedMode = "Key moments";
+
   const [activeMode, setActiveMode] = useState<
     keyof typeof modes | undefined
   >();
   const [isLoading, setIsLoading] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [theme] = useState("dark");
@@ -55,6 +51,7 @@ export default function Process() {
 
   const onModeSelect = async (mode: keyof typeof modes) => {
     setActiveMode(mode);
+    console.log(activeMode);
     setIsLoading(true);
     setErrorMessage(null);
     if (!file) {
@@ -278,6 +275,14 @@ export default function Process() {
           Upload your video and get instant play-by-play commentary. Analyze key
           moments, generate summaries, and more!
         </p>
+
+        {videoError && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            An error occurred while processing the video. Please try again.
+          </div>
+        )}
+
+        {/* Error message for upload */}
 
         {errorMessage && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
