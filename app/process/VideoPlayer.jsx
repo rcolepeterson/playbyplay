@@ -99,76 +99,24 @@ export default function VideoPlayer({
       {url && !isLoadingVideo ? (
         <>
           <div>
+            {/* Use native controls for accessibility and standard look */}
             <video
               src={url}
               ref={setVideo}
-              onClick={togglePlay}
+              controls
               preload="auto"
               crossOrigin="anonymous"
               onDurationChange={updateDuration}
               onTimeUpdate={updateTime}
               onPlay={onPlay}
               onPause={onPause}
+              style={{ width: "100%", borderRadius: "0.5rem", background: "black" }}
             />
-
             {currentCaption && (
               <div className="videoCaption">{currentCaption}</div>
             )}
           </div>
-
-          <div className="videoControls">
-            <div className="videoScrubber">
-              <input
-                style={{ "--pct": `${currentPercent}%` }}
-                type="range"
-                min="0"
-                max="1"
-                value={scrubberTime || 0}
-                step="0.000001"
-                onChange={(e) => {
-                  setScrubberTime(e.target.valueAsNumber);
-                  video.currentTime = e.target.valueAsNumber * duration;
-                }}
-                onPointerDown={() => setIsScrubbing(true)}
-                onPointerUp={() => setIsScrubbing(false)}
-              />
-            </div>
-            <div className="timecodeMarkers">
-              {timecodeList?.map(({ time, text, value }, i) => {
-                const secs = timeToSecs(time);
-                const pct = (secs / duration) * 100;
-
-                return (
-                  <div
-                    className="timecodeMarker"
-                    key={i}
-                    style={{ left: `${pct}%` }}
-                  >
-                    <div
-                      className="timecodeMarkerTick"
-                      onClick={() => jumpToTimecode(secs)}
-                    >
-                      <div />
-                    </div>
-                    <div
-                      className={c("timecodeMarkerLabel", { right: pct > 50 })}
-                    >
-                      <div>{time}</div>
-                      <p>{value || text}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="videoTime">
-              <button>
-                <span className="icon" onClick={togglePlay}>
-                  {isPlaying ? "pause" : "play_arrow"}
-                </span>
-              </button>
-              {formatTime(currentSecs)} / {formatTime(duration)}
-            </div>
-          </div>
+          {/* Remove custom controls for now; native controls handle play/pause/timeline */}
           <TextToSpeechTwo
             caption={currentCaption}
             excitementLevel={currentExcitmentLevel}

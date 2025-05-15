@@ -207,11 +207,11 @@ export default function Process() {
       onDragEnter={() => {}}
       onDragLeave={() => {}}
     >
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-4">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 className="text-4xl font-bold mb-4 text-center">
           Video Play-by-Play Generator
         </h1>
-        <p className="text-xl mb-8">
+        <p className="text-xl mb-8 text-center">
           Upload your video and get instant play-by-play commentary. Analyze key
           moments, generate summaries, and more!
         </p>
@@ -222,129 +222,102 @@ export default function Process() {
           </div>
         )}
 
+        {/* Only show upload instructions if no video is loaded */}
         {!vidUrl && (
-          <div className="mb-8">
+          <div className="mb-8 flex flex-col items-center justify-center">
             <Input
               type="file"
               accept="video/*"
               onChange={uploadVideo}
-              className="mb-4"
+              className="mb-4 max-w-xs"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-center">
               Drag and drop a video file here, or click to select one
             </p>
           </div>
         )}
 
-        <section className="top">
-          {vidUrl && !isLoadingVideo && (
-            <>
-              <div className={c("modeSelector", { hide: !showSidebar })}>
-                <div>
-                  <h2 className="text-2xl font-semibold mb-4">
-                    Explore this video via:
-                  </h2>
-                  <div className="modeList grid grid-cols-2 gap-4">
-                    {Object.entries(modes).map(([mode, { emoji }]) => (
-                      <Button
-                        key={mode}
-                        variant={mode === selectedMode ? "default" : "outline"}
-                        onClick={() =>
-                          setSelectedMode(mode as keyof typeof modes)
-                        }
-                        className="flex items-center justify-start"
-                      >
-                        <span className="mr-2">{emoji}</span> {mode}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    onClick={() => onModeSelect(selectedMode)}
-                    className="mr-2"
-                  >
-                    ▶️ Generate
-                  </Button>
-                  <Button variant="outline" onClick={downloadKeyMoments}>
-                    📥 Download Key Moments
-                  </Button>
-                </div>
+        {/* Video player and controls */}
+        {vidUrl && !isLoadingVideo && (
+          <>
+            <div className="flex flex-col items-center">
+              <div className="w-full rounded-lg shadow-lg overflow-hidden mb-6 bg-black">
+                <VideoPlayer
+                  url={vidUrl}
+                  requestedTimecode={requestedTimecode}
+                  timecodeList={timecodeList}
+                  jumpToTimecode={setRequestedTimecode}
+                  isLoadingVideo={isLoadingVideo}
+                  videoError={videoError}
+                />
               </div>
-              <Button
-                variant="ghost"
-                className="collapseButton"
-                onClick={() => setShowSidebar(!showSidebar)}
-              >
-                <span className="icon">
-                  {showSidebar ? "chevron_left" : "chevron_right"}
-                </span>
-              </Button>
-            </>
-          )}
+              <div className="flex flex-row gap-4 justify-center mb-8">
+                <Button
+                  onClick={() => onModeSelect(selectedMode)}
+                  disabled={isLoading}
+                  className="px-6 py-2 text-base font-semibold"
+                >
+                  Generate Commentary
+                </Button>
+                <Button
+                  onClick={downloadKeyMoments}
+                  disabled={!timecodeList}
+                  className="px-6 py-2 text-base font-semibold"
+                >
+                  Download Key Moments (JSON)
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
 
-          <VideoPlayer
-            url={vidUrl}
-            requestedTimecode={requestedTimecode}
-            timecodeList={timecodeList}
-            jumpToTimecode={setRequestedTimecode}
-            isLoadingVideo={isLoadingVideo}
-            videoError={videoError}
-          />
-        </section>
-
-        <div className={c("tools", { inactive: !vidUrl })}>
-          <section
-            className={c("output", { ["mode" + activeMode]: activeMode })}
-            ref={scrollRef}
-          >
+        {/* Commentary output section - only show once, below video */}
+        {vidUrl && (
+          <section className="output mt-4" ref={scrollRef}>
+            <div className="flex flex-col items-center">
+              <h2 className="text-2xl font-bold mb-2">Key Moments</h2>
+              <div className="w-16 h-1 bg-accent rounded mb-6" />
+            </div>
             {isLoading ? (
-              <div className="loading">
+              <div className="loading text-center">
                 Waiting for model<span>...</span>
               </div>
             ) : timecodeList ? (
               timecodeList.length === 1 ? (
-                <div className="singleMoment">
+                <div className="singleMoment flex flex-col items-center">
                   <span
-                    className="sentence"
+                    className="sentence cursor-pointer hover:bg-accent rounded p-2 transition"
                     role="button"
                     onClick={() =>
                       setRequestedTimecode(timeToSecs(timecodeList[0].time))
                     }
                   >
-                    <time>{timecodeList[0].time}</time>
+                    <time className="font-mono mr-2">
+                      {timecodeList[0].time}
+                    </time>
                     <span>{timecodeList[0].text}</span>
                   </span>
                 </div>
-              ) : modes[selectedMode].isList ? (
-                <ul>
+              ) : (
+                <ul className="space-y-2">
                   {timecodeList.map(({ time, text }, i) => (
                     <li key={i} className="outputItem">
                       <button
+                        className="w-full text-left hover:bg-accent rounded p-2 transition font-medium"
                         onClick={() => setRequestedTimecode(timeToSecs(time))}
                       >
-                        <time>{time}</time>
-                        <p className="text">{text}</p>
+                        <time className="font-mono mr-2 text-primary">
+                          {time}
+                        </time>
+                        <span>{text}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                timecodeList.map(({ time, text }, i) => (
-                  <span
-                    key={i}
-                    className="sentence"
-                    role="button"
-                    onClick={() => setRequestedTimecode(timeToSecs(time))}
-                  >
-                    <time>{time}</time>
-                    <span>{text}</span>
-                  </span>
-                ))
               )
             ) : null}
           </section>
-        </div>
+        )}
       </div>
     </main>
   );

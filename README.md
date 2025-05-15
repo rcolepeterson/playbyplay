@@ -9,3 +9,6 @@ https://lovable.dev/projects/d62f3cf3-5565-421f-8b1f-e0490c8749ba
 Supbase
 https://supabase.com/dashboard/project/hzdgthyybnokmdrsqsqk/building
 Op9pzFHRHUJn1RJH
+
+//google key
+https://aistudio.google.com/apikey
