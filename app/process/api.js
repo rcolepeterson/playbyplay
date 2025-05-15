@@ -81,8 +81,90 @@ function stripFunctions(obj) {
   return obj;
 }
 
+const DEBUG_MODE = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
+
 // eslint-disable-next-line import/no-anonymous-default-export
 export default async ({ functionDeclarations, file }) => {
+  if (DEBUG_MODE) {
+    // Debug mode: return hardcoded JSON and indicate debug is active
+    console.log("[DEBUG] Returning hardcoded commentary (debug mode ON)");
+    return {
+      debug: true,
+      initialResponse: {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  functionCall: {
+                    name: "set_timecodes",
+                    args: {
+                      timecodes: [
+                        {
+                          text: "Maroon team bursts out! A speedy start! (Excitement Level: 3)",
+                          time: "00:00",
+                          excitementLevel: 3,
+                        },
+                        {
+                          text: "Blue team intercepts! Can they turn the tide? (Excitement Level: 4)",
+                          time: "00:03",
+                          excitementLevel: 4,
+                        },
+                        {
+                          text: "YES! GOAL! Blue team scores! The crowd erupts! (Excitement Level: 5)",
+                          time: "00:07",
+                          excitementLevel: 5,
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              role: "model",
+            },
+            finishReason: "STOP",
+          },
+        ],
+      },
+      optimizedResponse: {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: `[
+  {"time": "00:00", "text": "Maroon team explodes off the mark! (Excitement Level: 2)", "excitementLevel": 2},
+  {"time": "00:03", "text": "Dribbling masterclass! Blue team scrambling! (Excitement Level: 4)", "excitementLevel": 4},
+  {"time": "00:06", "text": "He shoots! Is it going in?! (Excitement Level: 5)", "excitementLevel": 5}
+]`,
+                },
+              ],
+              role: "model",
+            },
+            finishReason: "STOP",
+          },
+        ],
+      },
+      optimizedTimecodes: [
+        {
+          time: "00:00",
+          text: "Maroon team explodes off the mark! (Excitement Level: 2)",
+          excitementLevel: 2,
+        },
+        {
+          time: "00:03",
+          text: "Dribbling masterclass! Blue team scrambling! (Excitement Level: 4)",
+          excitementLevel: 4,
+        },
+        {
+          time: "00:06",
+          text: "He shoots! Is it going in?! (Excitement Level: 5)",
+          excitementLevel: 5,
+        },
+      ],
+    };
+  }
+
   try {
     // Debug: log the file.uri to ensure it's a full public URL
     console.log("Gemini file.uri for API call:", file.uri);
