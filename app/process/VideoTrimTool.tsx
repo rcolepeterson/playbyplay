@@ -199,18 +199,32 @@ export default function VideoTrimTool({
   };
 
   return (
-    <div className="flex flex-col items-center border p-4 rounded bg-gray-50 mb-4 w-full max-w-xl">
+    <div className="flex flex-col items-center border p-4 rounded bg-gray-50 mb-4 w-full max-w-xl mx-auto">
       <h3 className="font-bold mb-2">Video Trim Tool (max {maxDuration}s)</h3>
       {videoUrl ? (
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          controls
-          className="w-full rounded mb-2"
-          onLoadedMetadata={handleLoadedMetadata}
-        />
+        <div className="w-full flex justify-center">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            controls
+            className="w-full max-w-2xl rounded mb-2"
+            onLoadedMetadata={handleLoadedMetadata}
+          />
+        </div>
       ) : (
-        <div className="text-red-500">No video file loaded.</div>
+        <div className="flex items-center justify-center w-full h-40 text-red-500 text-center">
+          No video file loaded.
+        </div>
+      )}
+      {processing && (
+        <div className="flex flex-col items-center justify-center w-full my-4">
+          <div className="w-8 h-8 mb-2 flex items-center justify-center">
+            <span className="block w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></span>
+          </div>
+          <div className="text-blue-700 font-semibold">
+            Trimming video, please wait...
+          </div>
+        </div>
       )}
       <div className="text-gray-600 text-sm mb-2">
         Video duration:{" "}
@@ -250,18 +264,11 @@ export default function VideoTrimTool({
         >
           {processing ? "Trimming..." : "Trim & Use"}
         </button>
-        <button
-          onClick={() => onTrimmed(file)}
-          disabled={processing}
-          className="px-4 py-2 bg-green-600 text-white rounded"
-        >
-          Use Original
-        </button>
+        {/* 'Use Original' button removed as it is never needed */}
       </div>
       {error && <div className="text-red-600 mt-2">{error}</div>}
       <div className="text-xs text-gray-500 mt-2">
-        Tip: Use &quot;Trim &amp; Use&quot; to select a segment, or &quot;Use
-        Original&quot; to keep the full video.
+        Tip: Use &quot;Trim &amp; Use&quot; to select a segment.
       </div>
     </div>
   );

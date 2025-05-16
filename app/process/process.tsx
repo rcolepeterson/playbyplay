@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useCallback, useEffect } from "react";
 
@@ -322,9 +323,16 @@ export default function Process() {
               }}
               className="mb-4 max-w-xs"
             />
-            {trimFileError && (
-              <div className="mb-2 p-2 bg-red-100 text-red-700 rounded text-sm">
-                {trimFileError}
+            {/* Enhanced error and guidance for too-long videos */}
+            {errorMessage && errorMessage.includes("too long") && (
+              <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded text-center max-w-md">
+                <div className="font-semibold mb-1">
+                  Your video is too long.
+                </div>
+                <div>{errorMessage}</div>
+                <div className="mt-2">
+                  Please use the trim tool below or select a different video.
+                </div>
               </div>
             )}
             <div className="flex flex-row gap-4 mb-2">
@@ -334,12 +342,34 @@ export default function Process() {
                 disabled={!pendingTrimFile}
                 className="px-4 py-2 text-base font-semibold"
               >
-                Trim Video (optional)
+                {errorMessage && errorMessage.includes("too long")
+                  ? "Trim Video (required)"
+                  : "Trim Video (optional)"}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setPendingTrimFile(null);
+                  setShowTrimTool(false);
+                  setErrorMessage(null);
+                  setTrimFileError(null);
+                  // Also clear file input value if needed (optional, for better UX)
+                  const input = document.querySelector(
+                    'input[type="file"]'
+                  ) as HTMLInputElement;
+                  if (input) input.value = "";
+                }}
+                className="px-4 py-2 text-base font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                Choose Another Video
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Drag and drop a video file here, or click to select one
-            </p>
+            {/* Only show the drag-and-drop message if no video is selected */}
+            {!pendingTrimFile && !vidUrl && (
+              <p className="text-sm text-muted-foreground text-center">
+                Drag and drop a video file here, or click to select one
+              </p>
+            )}
             {showTrimTool && pendingTrimFile && (
               <div className="w-full mt-4">
                 <VideoTrimTool
@@ -367,7 +397,7 @@ export default function Process() {
         )}
 
         {/* Video player and controls */}
-        {vidUrl && !isLoadingVideo && (
+        {vidUrl && !isLoadingVideo && !isLoading && (
           <>
             <div className="flex flex-col items-center">
               <div className="w-full rounded-lg shadow-lg overflow-hidden mb-6 bg-black">
@@ -395,6 +425,19 @@ export default function Process() {
               </div>
             </div>
           </>
+        )}
+        {/* Loader for post-trim, pre-display processing */}
+        {(isLoadingVideo || isLoading) && (
+          <div className="flex flex-col items-center justify-center w-full my-12">
+            <div className="w-12 h-12 mb-4 flex items-center justify-center">
+              <span className="block w-12 h-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></span>
+            </div>
+            <div className="text-blue-700 font-semibold text-lg text-center">
+              {isLoadingVideo
+                ? "Uploading and processing video, please wait..."
+                : "Generating play-by-play commentary, please wait..."}
+            </div>
+          </div>
         )}
 
         {/* Commentary output section - only show once, below video */}
