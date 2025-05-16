@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useRef, useState } from "react";
 import { textToSpeech } from "../playback/11TextSpeech";
 
@@ -102,7 +103,9 @@ export default function PreloadedTTSPlayer({
       {audioUrls.map((url, i) => (
         <audio
           key={i}
-          ref={(el) => (audioRefs.current[i] = el)}
+          ref={(el) => {
+            audioRefs.current[i] = el;
+          }}
           src={url || undefined}
           preload="auto"
           style={{ display: "none" }}
