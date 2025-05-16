@@ -10,6 +10,11 @@ import TextToSpeech from "./TTSEleven";
 
 const premadeExamples = [
   {
+    id: 8,
+    title: "Bubbles!",
+    thumbnail: "/thumbnails/bubbles.jpg",
+  },
+  {
     id: 7,
     title: "Trash!",
     thumbnail: "/thumbnails/trash_boy.png",
