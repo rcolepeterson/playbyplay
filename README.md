@@ -1,4 +1,4 @@
-ffmpeg -i boy-chores_output.mp4 -c:v libx264 -c:a aac -strict experimental -crf 28 -preset fast -movflags +faststart boy-chores_output_two.mp4
+ffmpeg -i boy_in_cart.mp4 -c:v libx264 -c:a aac -strict experimental -crf 28 -preset fast -movflags +faststart boy_in_cart_ouput.mp4
 
 /// supabase
 
@@ -12,3 +12,7 @@ Op9pzFHRHUJn1RJH
 
 //google key
 https://aistudio.google.com/apikey
+
+videos
+
+https://www.pexels.com/search/videos/shopping/
