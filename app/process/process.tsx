@@ -6,6 +6,7 @@ import generateContent from "./api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PreloadedTTSPlayer from "./PreloadedTTSPlayer";
+import { validateVideoFile } from "./validateVideoFile";
 
 // TypeScript interfaces for timecodes and file
 interface Timecode {
@@ -89,6 +90,24 @@ export default function Process() {
     if (!videoFile) {
       setIsLoadingVideo(false);
       setErrorMessage("No video file selected.");
+      return;
+    }
+    // Validate file size and duration before proceeding
+    try {
+      const validation = await validateVideoFile(videoFile, {
+        maxSizeMB: 10,
+        maxDurationSec: 16,
+      });
+      if (!validation.valid) {
+        setIsLoadingVideo(false);
+        setErrorMessage(validation.error || "Invalid video file.");
+        return;
+      }
+    } catch {
+      setIsLoadingVideo(false);
+      setErrorMessage(
+        "Could not read video metadata. Please try a different file."
+      );
       return;
     }
     setVidUrl(URL.createObjectURL(videoFile));
