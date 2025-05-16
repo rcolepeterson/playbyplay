@@ -4,18 +4,23 @@
     "timecodeList": [
         {
             "time": "00:00",
-            "text": "Number 8 steps up, the tension is palpable.",
+            "text": "Number 8 steps up, the tension is palpable. Family and friends watching.",
             "excitementLevel": 1
         },
         {
-            "text": "Approaches the ball... and it's a confident strike!",
-            "time": "00:05",
+            "text": "Here we go he approaches the ball...",
+            "time": "00:06",
+            "excitementLevel": 3
+        },
+        {
+            "text": "and it's a confident strike!",
+            "time": "00:08",
             "excitementLevel": 4
         },
         {
             "text": "The goalkeeper dives!!!, what a save!",
             "time": "00:09",
-            "excitementLevel": 4
+            "excitementLevel": 5
         }
     ]
 }

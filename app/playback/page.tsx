@@ -7,6 +7,7 @@ import { Video } from "lucide-react";
 import Image from "next/image";
 //import TextToSpeech from "./TextToSpeech";
 import TextToSpeech from "./TTSEleven";
+import { textToSpeech } from "./11TextSpeech";
 
 const premadeExamples = [
   {
@@ -52,6 +53,12 @@ export default function ImprovedPlayback() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIndexRef = useRef<number>(-1);
   const [key, setKey] = useState(0);
+  const [audioUrls, setAudioUrls] = useState<(string | null)[]>([]);
+  const [isLoadingTTS, setIsLoadingTTS] = useState(false);
+  const [isReadyTTS, setIsReadyTTS] = useState(false);
+  const [ttsError, setTTSError] = useState<string | null>(null);
+  const [isPlayingExperience, setIsPlayingExperience] = useState(false);
+  const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
 
   const resetState = useCallback(() => {
     setVidUrl(null);
@@ -155,6 +162,68 @@ export default function ImprovedPlayback() {
     }
   }, [updateCurrentMoment, handlePlay, handlePause]);
 
+  // When a new video is loaded, revoke previous audio URLs and reset TTS state
+  useEffect(() => {
+    // Revoke all previous audio URLs
+    audioUrls.forEach((url) => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    setAudioUrls([]);
+    setIsReadyTTS(false);
+    setIsLoadingTTS(false);
+    setTTSError(null);
+    audioRefs.current = [];
+    setIsPlayingExperience(false);
+    // Optionally reset other playback state if needed
+  }, [vidUrl]);
+
+  // Preload all TTS audio for the timecodes
+  const preloadAllAudio = async () => {
+    setIsLoadingTTS(true);
+    setTTSError(null);
+    try {
+      const urls: (string | null)[] = [];
+      for (const tc of timecodeList) {
+        const blob = await textToSpeech(tc.text, "JBFqnCBsd6RMkjVDRZzb");
+        if (blob) {
+          urls.push(URL.createObjectURL(blob));
+        } else {
+          urls.push(null);
+        }
+      }
+      setAudioUrls(urls);
+      setIsReadyTTS(true);
+    } catch (e) {
+      setTTSError("Failed to load TTS audio. Please try again.");
+    }
+    setIsLoadingTTS(false);
+  };
+
+  // Play video and TTS in sync
+  const handlePlayExperience = () => {
+    if (!isReadyTTS || !videoRef.current) return;
+    setIsPlayingExperience(true);
+    videoRef.current.currentTime = 0;
+    videoRef.current.play();
+    playTTSForCurrentTimecode(0);
+  };
+
+  // Play the TTS audio for the current timecode, and schedule the next
+  const playTTSForCurrentTimecode = (index: number) => {
+    if (!audioUrls[index] || !audioRefs.current[index]) return;
+    audioRefs.current[index]!.currentTime = 0;
+    audioRefs.current[index]!.play();
+    audioRefs.current[index]!.onended = () => {
+      // Schedule next TTS if exists
+      if (index + 1 < timecodeList.length) {
+        const nextTime = timeToSecs(timecodeList[index + 1].time);
+        const now = videoRef.current?.currentTime || 0;
+        const delay = Math.max(0, nextTime - now);
+        setTimeout(() => playTTSForCurrentTimecode(index + 1), delay * 1000);
+      }
+    };
+  };
+
   return (
     <div className="container mx-auto p-4">
       <Card className="mb-6">
@@ -183,6 +252,43 @@ export default function ImprovedPlayback() {
             ) : (
               <div className="w-full aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-400" />
+              </div>
+            )}
+            {/* Loader and TTS controls */}
+            {vidUrl && timecodeList.length > 0 && (
+              <div className="flex flex-col items-center mt-4">
+                {!isReadyTTS && (
+                  <Button
+                    onClick={preloadAllAudio}
+                    disabled={isLoadingTTS}
+                    className="px-6 py-2 text-base font-semibold bg-blue-600 text-white rounded mb-2"
+                  >
+                    {isLoadingTTS ? "Loading TTS..." : "Load & Play"}
+                  </Button>
+                )}
+                {isReadyTTS && (
+                  <Button
+                    onClick={handlePlayExperience}
+                    className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded mb-2"
+                  >
+                    Play Experience
+                  </Button>
+                )}
+                {ttsError && (
+                  <div className="text-red-600 mb-2">{ttsError}</div>
+                )}
+                {/* Preload all audio elements, but keep them hidden */}
+                {audioUrls.map((url, i) => (
+                  <audio
+                    key={i}
+                    ref={(el) => {
+                      audioRefs.current[i] = el;
+                    }}
+                    src={url || undefined}
+                    preload="auto"
+                    style={{ display: "none" }}
+                  />
+                ))}
               </div>
             )}
           </CardContent>
@@ -218,6 +324,8 @@ export default function ImprovedPlayback() {
           </CardContent>
         </Card>
       </div>
+      {/* REMOVE old TTS playback: only use preloaded audio */}
+      {/*
       {currentMoment && isPlaying && isSpeaking && (
         <TextToSpeech
           key={`${key}-${currentMoment.time}`}
@@ -225,6 +333,7 @@ export default function ImprovedPlayback() {
           //onSpeechEnd={handleSpeechEnd}
         />
       )}
+      */}
       <div>
         <h4 className="text-2xl font-semibold mt-12 mb-4">
           Explore Premade Examples
