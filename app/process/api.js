@@ -222,7 +222,7 @@ export default async ({ file }) => {
     // Debug: log the file.uri to ensure it's a full public URL
     console.log("Gemini file.uri for API call:", file.uri);
 
-    // First API call
+    // First AI call: use inlineData for video
     const initialResponse = await client
       .getGenerativeModel(
         { model: "gemini-1.5-flash", systemInstruction },
@@ -236,12 +236,15 @@ export default async ({ file }) => {
               {
                 text: `${prompt} The video is ${file.duration} seconds long. Describe specific visual elements you see, such as colors, numbers of people, types of movements, or notable objects. Capture the energy progression and any dramatic shifts in the video.`,
               },
-              {
-                fileData: {
-                  mimeType: file.mimeType,
-                  fileUri: file.uri,
-                },
-              },
+              // CHANGE: use inlineData instead of fileData
+              file.base64Video
+                ? {
+                    inlineData: {
+                      mimeType: file.mimeType,
+                      data: file.base64Video,
+                    },
+                  }
+                : { fileData: { mimeType: file.mimeType, fileUri: file.uri } },
             ],
           },
         ],

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState } from "react";
@@ -18,9 +19,10 @@ interface Timecode {
 }
 interface UploadedFile {
   name: string;
-  uri: string;
+  uri?: string;
   mimeType: string;
   duration?: number;
+  base64Video?: string; // allow in-memory base64
 }
 
 export default function Process() {
@@ -164,69 +166,48 @@ export default function Process() {
     }
 
     setVidUrl(URL.createObjectURL(videoFile));
-    const formData = new FormData();
-    formData.set("video", videoFile);
+    // Read file as base64
+    const toBase64 = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove the data:...;base64, prefix
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    // Extract video duration using a temporary video element
+    const getDuration = (file: File): Promise<number> => {
+      return new Promise((resolve) => {
+        const tempVideo = document.createElement("video");
+        tempVideo.preload = "metadata";
+        tempVideo.onloadedmetadata = () => {
+          resolve(tempVideo.duration);
+          URL.revokeObjectURL(tempVideo.src);
+        };
+        tempVideo.src = URL.createObjectURL(file);
+      });
+    };
     try {
-      const resp = await (
-        await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-      ).json();
-      if (resp.error) {
-        setErrorMessage(resp.error + (resp.details ? ": " + resp.details : ""));
-        setIsLoadingVideo(false);
-        return;
-      }
-      // Extract video duration using a temporary video element
-      const getDuration = (file: File): Promise<number> => {
-        return new Promise((resolve) => {
-          const tempVideo = document.createElement("video");
-          tempVideo.preload = "metadata";
-          tempVideo.onloadedmetadata = () => {
-            resolve(tempVideo.duration);
-            URL.revokeObjectURL(tempVideo.src);
-          };
-          tempVideo.src = URL.createObjectURL(file);
-        });
-      };
-      const duration = await getDuration(videoFile);
-      const uploadedFile = {
-        name: resp.fileName,
-        uri: resp.geminiFile.uri, // Use Gemini file URI, not public URL
-        mimeType: resp.geminiFile.mimeType,
+      const [base64Video, duration] = await Promise.all([
+        toBase64(videoFile),
+        getDuration(videoFile),
+      ]);
+      setFile({
+        name: videoFile.name,
+        mimeType: videoFile.type,
+        base64Video,
         duration,
-      };
-      setFile(uploadedFile);
-      checkProgress(resp.fileName);
-    } catch (err) {
-      if (err instanceof Error) {
-        setErrorMessage(err.message || "An error occurred during upload.");
-      } else {
-        setErrorMessage("An error occurred during upload.");
-      }
+      });
+    } catch {
+      setErrorMessage("Failed to read video file. Please try again.");
+      setIsLoadingVideo(false);
+      return;
     }
     setIsLoadingVideo(false);
-  };
-
-  const checkProgress = async (fileId: string) => {
-    const resp = await (
-      await fetch("/api/progress", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fileId }),
-      })
-    ).json();
-    if (resp.progress && resp.progress.state === "ACTIVE") {
-      setIsLoadingVideo(false);
-    } else if (resp.progress && resp.progress.state === "FAILED") {
-      setVideoError(true);
-    } else {
-      setVideoError(true); // or handle as error
-    }
   };
 
   // Only show PreloadedTTSPlayer if video and timecodes are ready
