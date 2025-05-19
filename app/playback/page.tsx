@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video } from "lucide-react";
 import Image from "next/image";
-//import TextToSpeech from "./TextToSpeech";
-//import TextToSpeech from "./TTSEleven";
-import { textToSpeech } from "./11TextSpeech";
+import PreloadedTTSPlayer from "../process/PreloadedTTSPlayer";
 
 const premadeExamples = [
   {
@@ -50,16 +48,11 @@ export default function ImprovedPlayback() {
   const [error, setError] = useState<string | null>(null);
   const [currentMoment, setCurrentMoment] = useState<Timecode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIndexRef = useRef<number>(-1);
   const [key, setKey] = useState(0);
-  const [audioUrls, setAudioUrls] = useState<(string | null)[]>([]);
-  const [isLoadingTTS, setIsLoadingTTS] = useState(false);
-  const [isReadyTTS, setIsReadyTTS] = useState(false);
-  const [ttsError, setTTSError] = useState<string | null>(null);
-  const [isPlayingExperience, setIsPlayingExperience] = useState(false);
-  const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
+  // Add a state to control TTS player visibility
+  const [showTTS, setShowTTS] = useState(false);
 
   const resetState = useCallback(() => {
     setVidUrl(null);
@@ -67,7 +60,6 @@ export default function ImprovedPlayback() {
     setError(null);
     setIsPlaying(false);
     setCurrentMoment(null);
-    setIsSpeaking(false);
     currentMomentIndexRef.current = -1;
     setKey((prevKey) => prevKey + 1);
   }, []);
@@ -105,7 +97,7 @@ export default function ImprovedPlayback() {
         videoRef.current.play();
       }
     },
-    [videoRef] // Removed unnecessary dependencies: timeToSecs
+    [videoRef]
   );
 
   const timeToSecs = (time: string) => {
@@ -113,116 +105,41 @@ export default function ImprovedPlayback() {
     return minutes * 60 + seconds;
   };
 
-  const updateCurrentMoment = useCallback(() => {
-    if (videoRef.current && timecodeList.length > 0) {
-      const currentTime = videoRef.current.currentTime;
-      const nextIndex = timecodeList.findIndex((timecode, index) => {
-        return (
-          index > currentMomentIndexRef.current &&
-          timeToSecs(timecode.time) <= currentTime
-        );
-      });
-
-      if (nextIndex !== -1 && nextIndex !== currentMomentIndexRef.current) {
-        currentMomentIndexRef.current = nextIndex;
-        setCurrentMoment(timecodeList[nextIndex]);
-        setIsSpeaking(true);
-      }
-    }
-  }, [timecodeList]);
-
-  const handlePlay = useCallback(() => {
-    setIsPlaying(true);
-    // Reset the current moment index when the video starts playing
-    currentMomentIndexRef.current = -1;
-    updateCurrentMoment();
-  }, [updateCurrentMoment]);
-
-  const handlePause = useCallback(() => setIsPlaying(false), []);
-  //const handleSpeechEnd = useCallback(() => setIsSpeaking(false), []);
-
+  // Highlight logic: update currentMoment as video plays
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.addEventListener("loadeddata", updateCurrentMoment);
-      videoRef.current.addEventListener("timeupdate", updateCurrentMoment);
-      videoRef.current.addEventListener("play", handlePlay);
-      videoRef.current.addEventListener("pause", handlePause);
-
-      return () => {
-        videoRef.current?.removeEventListener(
-          "loadeddata",
-          updateCurrentMoment
-        );
-        videoRef.current?.removeEventListener(
-          "timeupdate",
-          updateCurrentMoment
-        );
-        videoRef.current?.removeEventListener("play", handlePlay);
-        videoRef.current?.removeEventListener("pause", handlePause);
-      };
-    }
-  }, [updateCurrentMoment, handlePlay, handlePause]);
-
-  // When a new video is loaded, revoke previous audio URLs and reset TTS state
-  useEffect(() => {
-    // Revoke all previous audio URLs
-    audioUrls.forEach((url) => {
-      if (url) URL.revokeObjectURL(url);
-    });
-    setAudioUrls([]);
-    setIsReadyTTS(false);
-    setIsLoadingTTS(false);
-    setTTSError(null);
-    audioRefs.current = [];
-    setIsPlayingExperience(false);
-    // Optionally reset other playback state if needed
-  }, [vidUrl]);
-
-  // Preload all TTS audio for the timecodes
-  const preloadAllAudio = async () => {
-    setIsLoadingTTS(true);
-    setTTSError(null);
-    try {
-      const urls: (string | null)[] = [];
-      for (const tc of timecodeList) {
-        const blob = await textToSpeech(tc.text, "JBFqnCBsd6RMkjVDRZzb");
-        if (blob) {
-          urls.push(URL.createObjectURL(blob));
+    if (!videoRef.current || timecodeList.length === 0) return;
+    const handleTimeUpdate = () => {
+      const currentTime = videoRef.current!.currentTime;
+      let foundIndex = -1;
+      for (let i = 0; i < timecodeList.length; i++) {
+        if (timeToSecs(timecodeList[i].time) <= currentTime) {
+          foundIndex = i;
         } else {
-          urls.push(null);
+          break;
         }
       }
-      setAudioUrls(urls);
-      setIsReadyTTS(true);
-    } catch (e) {
-      setTTSError("Failed to load TTS audio. Please try again.");
-    }
-    setIsLoadingTTS(false);
-  };
-
-  // Play video and TTS in sync
-  const handlePlayExperience = () => {
-    if (!isReadyTTS || !videoRef.current) return;
-    setIsPlayingExperience(true);
-    videoRef.current.currentTime = 0;
-    videoRef.current.play();
-    playTTSForCurrentTimecode(0);
-  };
-
-  // Play the TTS audio for the current timecode, and schedule the next
-  const playTTSForCurrentTimecode = (index: number) => {
-    if (!audioUrls[index] || !audioRefs.current[index]) return;
-    audioRefs.current[index]!.currentTime = 0;
-    audioRefs.current[index]!.play();
-    audioRefs.current[index]!.onended = () => {
-      // Schedule next TTS if exists
-      if (index + 1 < timecodeList.length) {
-        const nextTime = timeToSecs(timecodeList[index + 1].time);
-        const now = videoRef.current?.currentTime || 0;
-        const delay = Math.max(0, nextTime - now);
-        setTimeout(() => playTTSForCurrentTimecode(index + 1), delay * 1000);
+      if (foundIndex !== currentMomentIndexRef.current) {
+        currentMomentIndexRef.current = foundIndex;
+        setCurrentMoment(foundIndex !== -1 ? timecodeList[foundIndex] : null);
       }
     };
+    videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
+    videoRef.current.addEventListener("play", () => setIsPlaying(true));
+    videoRef.current.addEventListener("pause", () => setIsPlaying(false));
+    return () => {
+      videoRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [timecodeList]);
+
+  // Reset highlight when new video loads
+  useEffect(() => {
+    setCurrentMoment(null);
+    currentMomentIndexRef.current = -1;
+  }, [vidUrl, timecodeList]);
+
+  // Add a function to handle TTS load
+  const handleLoadTTS = () => {
+    setShowTTS(true);
   };
 
   return (
@@ -241,55 +158,30 @@ export default function ImprovedPlayback() {
         <Card>
           <CardContent className="p-4">
             {vidUrl ? (
-              <video
-                key={key}
-                ref={videoRef}
-                controls
-                className="w-full rounded-lg shadow-lg"
-              >
-                <source src={vidUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              showTTS ? (
+                <PreloadedTTSPlayer
+                  videoUrl={vidUrl}
+                  timecodes={timecodeList}
+                />
+              ) : (
+                <>
+                  <video
+                    key={key}
+                    ref={videoRef}
+                    controls
+                    className="w-full rounded-lg shadow-lg"
+                  >
+                    <source src={vidUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  <Button className="mt-4 w-full" onClick={handleLoadTTS}>
+                    Load TTS
+                  </Button>
+                </>
+              )
             ) : (
               <div className="w-full aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-400" />
-              </div>
-            )}
-            {/* Loader and TTS controls */}
-            {vidUrl && timecodeList.length > 0 && (
-              <div className="flex flex-col items-center mt-4">
-                {!isReadyTTS && (
-                  <Button
-                    onClick={preloadAllAudio}
-                    disabled={isLoadingTTS}
-                    className="px-6 py-2 text-base font-semibold bg-blue-600 text-white rounded mb-2"
-                  >
-                    {isLoadingTTS ? "Loading TTS..." : "Load & Play"}
-                  </Button>
-                )}
-                {isReadyTTS && (
-                  <Button
-                    onClick={handlePlayExperience}
-                    className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded mb-2"
-                  >
-                    Play Experience
-                  </Button>
-                )}
-                {ttsError && (
-                  <div className="text-red-600 mb-2">{ttsError}</div>
-                )}
-                {/* Preload all audio elements, but keep them hidden */}
-                {audioUrls.map((url, i) => (
-                  <audio
-                    key={i}
-                    ref={(el) => {
-                      audioRefs.current[i] = el;
-                    }}
-                    src={url || undefined}
-                    preload="auto"
-                    style={{ display: "none" }}
-                  />
-                ))}
               </div>
             )}
           </CardContent>
@@ -308,9 +200,9 @@ export default function ImprovedPlayback() {
                     onClick={() => jumpToTimecode(timecode.time)}
                     className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
                       currentMoment === timecode
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground bg-yellow-300"
                         : "hover:bg-secondary"
-                    } ${currentMoment === timecode ? "bg-yellow-300" : ""}`}
+                    }`}
                   >
                     <span className="font-semibold">{timecode.time}</span> -{" "}
                     {timecode.text}
@@ -325,16 +217,6 @@ export default function ImprovedPlayback() {
           </CardContent>
         </Card>
       </div>
-      {/* REMOVE old TTS playback: only use preloaded audio */}
-      {/*
-      {currentMoment && isPlaying && isSpeaking && (
-        <TextToSpeech
-          key={`${key}-${currentMoment.time}`}
-          caption={currentMoment.text}
-          //onSpeechEnd={handleSpeechEnd}
-        />
-      )}
-      */}
       <div>
         <h4 className="text-2xl font-semibold mt-12 mb-4">
           Explore Premade Examples
@@ -352,7 +234,10 @@ export default function ImprovedPlayback() {
                 />
                 <h3 className="font-semibold text-lg">{example.title}</h3>
                 <Button
-                  onClick={() => loadTestJson(example.id)}
+                  onClick={() => {
+                    loadTestJson(example.id);
+                    setShowTTS(false);
+                  }}
                   className="mt-2 w-full"
                 >
                   Watch Now

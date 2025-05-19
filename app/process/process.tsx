@@ -136,6 +136,33 @@ export default function Process() {
       );
       return;
     }
+
+    // DEBUG MODE: skip upload, use local object URL and mock file info
+    if (process.env.NEXT_PUBLIC_DEBUG_MODE === "true") {
+      setVidUrl(URL.createObjectURL(videoFile));
+      // Extract video duration using a temporary video element
+      const getDuration = (file: File): Promise<number> => {
+        return new Promise((resolve) => {
+          const tempVideo = document.createElement("video");
+          tempVideo.preload = "metadata";
+          tempVideo.onloadedmetadata = () => {
+            resolve(tempVideo.duration);
+            URL.revokeObjectURL(tempVideo.src);
+          };
+          tempVideo.src = URL.createObjectURL(file);
+        });
+      };
+      const duration = await getDuration(videoFile);
+      setFile({
+        name: videoFile.name,
+        uri: "", // No remote URI
+        mimeType: videoFile.type,
+        duration,
+      });
+      setIsLoadingVideo(false);
+      return;
+    }
+
     setVidUrl(URL.createObjectURL(videoFile));
     const formData = new FormData();
     formData.set("video", videoFile);
@@ -202,28 +229,6 @@ export default function Process() {
     }
   };
 
-  const downloadKeyMoments = () => {
-    if (!timecodeList) {
-      alert("No key moments to download.");
-      return;
-    }
-    const data = {
-      videoPath: vidUrl,
-      timecodeList,
-    };
-    console.log("Generated JSON for key moments:", data);
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(data));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "key_moments.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    alert("Key moments have been downloaded.");
-  };
-
   // Only show PreloadedTTSPlayer if video and timecodes are ready
   if (vidUrl && timecodeList && timecodeList.length > 0) {
     return (
@@ -237,32 +242,6 @@ export default function Process() {
             key moments, generate summaries, and more!
           </p>
           <PreloadedTTSPlayer videoUrl={vidUrl} timecodes={timecodeList} />
-          <div className="flex flex-row gap-4 justify-center mb-8 mt-4">
-            <Button
-              onClick={downloadKeyMoments}
-              disabled={!timecodeList}
-              className="px-6 py-2 text-base font-semibold"
-            >
-              Download Key Moments (JSON)
-            </Button>
-          </div>
-          <section className="output mt-4">
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold mb-2">Key Moments</h2>
-              <div className="w-16 h-1 bg-accent rounded mb-6" />
-            </div>
-            <ul className="space-y-2">
-              {timecodeList.map((timecode, i) => (
-                <li
-                  key={i}
-                  className="p-2 rounded cursor-pointer transition-colors duration-200 hover:bg-secondary"
-                >
-                  <span className="font-semibold">{timecode.time}</span> -{" "}
-                  {timecode.text}
-                </li>
-              ))}
-            </ul>
-          </section>
         </div>
       </main>
     );
@@ -420,13 +399,7 @@ export default function Process() {
                 >
                   Generate Commentary
                 </Button>
-                <Button
-                  onClick={downloadKeyMoments}
-                  disabled={!timecodeList}
-                  className="px-6 py-2 text-base font-semibold"
-                >
-                  Download Key Moments (JSON)
-                </Button>
+                {/* Removed Download Key Moments button from here */}
               </div>
             </div>
           </>
@@ -446,31 +419,7 @@ export default function Process() {
         )}
 
         {/* Commentary output section - only show once, below video */}
-        {vidUrl && ((timecodeList && timecodeList.length > 0) || isLoading) && (
-          <section className="output mt-4" ref={scrollRef}>
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold mb-2">Key Moments</h2>
-              <div className="w-16 h-1 bg-accent rounded mb-6" />
-            </div>
-            {isLoading ? (
-              <div className="loading text-center">
-                Waiting for model<span>...</span>
-              </div>
-            ) : timecodeList && timecodeList.length > 0 ? (
-              <ul className="space-y-2">
-                {timecodeList.map((timecode, i) => (
-                  <li
-                    key={i}
-                    className={`p-2 rounded cursor-pointer transition-colors duration-200 hover:bg-secondary`}
-                  >
-                    <span className="font-semibold">{timecode.time}</span> -{" "}
-                    {timecode.text}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-        )}
+        {/* Removed duplicate Key Moments list from here. Now handled in PreloadedTTSPlayer. */}
       </div>
     </main>
   );

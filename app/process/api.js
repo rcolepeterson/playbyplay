@@ -187,32 +187,34 @@ export default async ({ file }) => {
   if (DEBUG_MODE) {
     // Debug mode: return hardcoded JSON and indicate debug is active
     console.log("[DEBUG] Returning hardcoded commentary (debug mode ON)");
+    const timecodeList = [
+      {
+        time: "00:00",
+        text: "Bubble battle begins! Dad and daughter team up for a soapy showdown!",
+        excitementLevel: 3,
+      },
+      {
+        time: "00:04",
+        text: "Wow! Giant bubbles launch into the air—a mesmerizing spectacle!",
+        excitementLevel: 4,
+      },
+      {
+        time: "00:09",
+        text: "The little one's focus is intense!  Pure concentration, pure bubble power!",
+        excitementLevel: 2,
+      },
+      {
+        time: "00:12",
+        text: "Unbelievable! A final burst of bubbles—a magnificent finale!",
+        excitementLevel: 5,
+      },
+    ];
     return {
       debug: true,
       videoPath:
         "blob:http://localhost:3000/55714950-c127-4c71-9308-ce41e8ea9389",
-      timecodeList: [
-        {
-          time: "00:00",
-          text: "Bubble battle begins! Dad and daughter team up for a soapy showdown!",
-          excitementLevel: 3,
-        },
-        {
-          time: "00:04",
-          text: "Wow! Giant bubbles launch into the air—a mesmerizing spectacle!",
-          excitementLevel: 4,
-        },
-        {
-          time: "00:09",
-          text: "The little one's focus is intense!  Pure concentration, pure bubble power!",
-          excitementLevel: 2,
-        },
-        {
-          time: "00:12",
-          text: "Unbelievable! A final burst of bubbles—a magnificent finale!",
-          excitementLevel: 5,
-        },
-      ],
+      timecodeList,
+      optimizedTimecodes: timecodeList, // <-- Add this line for compatibility
     };
   }
 
