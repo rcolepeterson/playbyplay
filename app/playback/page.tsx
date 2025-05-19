@@ -51,8 +51,6 @@ export default function ImprovedPlayback() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIndexRef = useRef<number>(-1);
   const [key, setKey] = useState(0);
-  // Add a state to control TTS player visibility
-  const [showTTS, setShowTTS] = useState(false);
 
   const resetState = useCallback(() => {
     setVidUrl(null);
@@ -137,11 +135,6 @@ export default function ImprovedPlayback() {
     currentMomentIndexRef.current = -1;
   }, [vidUrl, timecodeList]);
 
-  // Add a function to handle TTS load
-  const handleLoadTTS = () => {
-    setShowTTS(true);
-  };
-
   return (
     <div className="container mx-auto p-4">
       <Card className="mb-6">
@@ -158,73 +151,18 @@ export default function ImprovedPlayback() {
         <Card>
           <CardContent className="p-4">
             {vidUrl ? (
-              showTTS ? (
-                <PreloadedTTSPlayer
-                  videoUrl={vidUrl}
-                  timecodes={timecodeList}
-                />
-              ) : (
-                <>
-                  <div className="relative w-full">
-                    <video
-                      key={key}
-                      ref={videoRef}
-                      controls
-                      className="w-full rounded-lg shadow-lg bg-black"
-                      onEnded={() => {
-                        // When video ends, reset to just before the end so it doesn't go to black
-                        if (videoRef.current) {
-                          const almostEnd = videoRef.current.duration
-                            ? Math.max(0, videoRef.current.duration - 0.05)
-                            : 0;
-                          videoRef.current.currentTime = almostEnd;
-                          videoRef.current.pause();
-                        }
-                      }}
-                    >
-                      <source src={vidUrl} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                  <Button className="mt-4 w-full" onClick={handleLoadTTS}>
-                    Load TTS
-                  </Button>
-                </>
-              )
+              <div className="flex flex-col md:flex-row md:space-x-8 w-full items-start">
+                <div className="flex-1 w-full">
+                  <PreloadedTTSPlayer
+                    videoUrl={vidUrl}
+                    timecodes={timecodeList}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="w-full aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-400" />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Key Moments</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {timecodeList.length > 0 ? (
-              <ul className="space-y-2">
-                {timecodeList.map((timecode, index) => (
-                  <li
-                    key={index}
-                    onClick={() => jumpToTimecode(timecode.time)}
-                    className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
-                      currentMoment === timecode
-                        ? "bg-primary text-primary-foreground bg-yellow-300"
-                        : "hover:bg-secondary"
-                    }`}
-                  >
-                    <span className="font-semibold">{timecode.time}</span> -{" "}
-                    {timecode.text}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 text-center">
-                No key moments available. Upload a JSON file to see key moments.
-              </p>
             )}
           </CardContent>
         </Card>
@@ -248,7 +186,6 @@ export default function ImprovedPlayback() {
                 <Button
                   onClick={() => {
                     loadTestJson(example.id);
-                    setShowTTS(false);
                   }}
                   className="mt-2 w-full"
                 >

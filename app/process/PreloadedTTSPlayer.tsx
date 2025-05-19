@@ -17,7 +17,12 @@ interface PreloadedTTSPlayerProps {
 export default function PreloadedTTSPlayer({
   videoUrl,
   timecodes,
-}: PreloadedTTSPlayerProps) {
+  hideKeyMomentsList = false,
+  currentMomentIdxOverride,
+}: PreloadedTTSPlayerProps & {
+  hideKeyMomentsList?: boolean;
+  currentMomentIdxOverride?: number | null;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [audioUrls, setAudioUrls] = useState<(string | null)[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +139,12 @@ export default function PreloadedTTSPlayer({
     };
   }, [isReady, timecodes]);
 
+  // Use override for currentMomentIdx if provided
+  const effectiveCurrentMomentIdx =
+    typeof currentMomentIdxOverride === "number"
+      ? currentMomentIdxOverride
+      : currentMomentIdx;
+
   // Helper to convert mm:ss to seconds
   function timeToSecs(time: string) {
     const [m, s] = time.split(":").map(Number);
@@ -157,6 +168,30 @@ export default function PreloadedTTSPlayer({
           }
         }}
       />
+      {/* Only show Key Moments list here if not hidden */}
+      {!hideKeyMomentsList && (
+        <div className="w-full max-w-xl mt-4">
+          <h2 className="text-xl font-bold mb-2">Key Moments</h2>
+          <ul className="space-y-2">
+            {timecodes.map((tc, i) => (
+              <li
+                key={i}
+                className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
+                  effectiveCurrentMomentIdx === i
+                    ? "bg-yellow-300 text-black font-bold"
+                    : "hover:bg-secondary"
+                }`}
+                onClick={() => {
+                  if (videoRef.current)
+                    videoRef.current.currentTime = timeToSecs(tc.time);
+                }}
+              >
+                <span className="font-semibold">{tc.time}</span> - {tc.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {!isReady && (
         <button
           onClick={preloadAllAudio}
@@ -175,28 +210,6 @@ export default function PreloadedTTSPlayer({
         </button>
       )}
       {error && <div className="text-red-600 mb-2">{error}</div>}
-      {/* Only show Key Moments list here, not in parent */}
-      <div className="w-full max-w-xl mt-4">
-        <h2 className="text-xl font-bold mb-2">Key Moments</h2>
-        <ul className="space-y-2">
-          {timecodes.map((tc, i) => (
-            <li
-              key={i}
-              className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
-                currentMomentIdx === i
-                  ? "bg-yellow-300 text-black font-bold"
-                  : "hover:bg-secondary"
-              }`}
-              onClick={() => {
-                if (videoRef.current)
-                  videoRef.current.currentTime = timeToSecs(tc.time);
-              }}
-            >
-              <span className="font-semibold">{tc.time}</span> - {tc.text}
-            </li>
-          ))}
-        </ul>
-      </div>
       {/* Only show Download Key Moments if debug mode is true */}
       {isDebug && (
         <button
