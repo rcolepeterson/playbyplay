@@ -151,14 +151,7 @@ export default function ImprovedPlayback() {
         <Card>
           <CardContent className="p-4">
             {vidUrl ? (
-              <div className="flex flex-col md:flex-row md:space-x-8 w-full items-start">
-                <div className="flex-1 w-full">
-                  <PreloadedTTSPlayer
-                    videoUrl={vidUrl}
-                    timecodes={timecodeList}
-                  />
-                </div>
-              </div>
+              <PreloadedTTSPlayer videoUrl={vidUrl} timecodes={timecodeList} />
             ) : (
               <div className="w-full aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-400" />

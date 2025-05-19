@@ -204,7 +204,7 @@ export default function PreloadedTTSPlayer({
       {isReady && (
         <button
           onClick={handlePlay}
-          className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded mb-2"
+          className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded my-2"
         >
           Play Experience
         </button>
