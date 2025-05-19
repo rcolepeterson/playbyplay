@@ -165,15 +165,27 @@ export default function ImprovedPlayback() {
                 />
               ) : (
                 <>
-                  <video
-                    key={key}
-                    ref={videoRef}
-                    controls
-                    className="w-full rounded-lg shadow-lg"
-                  >
-                    <source src={vidUrl} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                  <div className="relative w-full">
+                    <video
+                      key={key}
+                      ref={videoRef}
+                      controls
+                      className="w-full rounded-lg shadow-lg bg-black"
+                      onEnded={() => {
+                        // When video ends, reset to just before the end so it doesn't go to black
+                        if (videoRef.current) {
+                          const almostEnd = videoRef.current.duration
+                            ? Math.max(0, videoRef.current.duration - 0.05)
+                            : 0;
+                          videoRef.current.currentTime = almostEnd;
+                          videoRef.current.pause();
+                        }
+                      }}
+                    >
+                      <source src={vidUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
                   <Button className="mt-4 w-full" onClick={handleLoadTTS}>
                     Load TTS
                   </Button>

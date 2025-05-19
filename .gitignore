@@ -41,4 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # video uploads
-/public/videos/
+#/public/videos/

@@ -142,7 +142,21 @@ export default function PreloadedTTSPlayer({
 
   return (
     <div className="flex flex-col items-center">
-      <video ref={videoRef} src={videoUrl} className="w-full rounded-lg mb-4" />
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full rounded-lg mb-4 bg-black"
+        onEnded={() => {
+          // When video ends, reset to just before the end so it doesn't go to black
+          if (videoRef.current) {
+            const almostEnd = videoRef.current.duration
+              ? Math.max(0, videoRef.current.duration - 0.05)
+              : 0;
+            videoRef.current.currentTime = almostEnd;
+            videoRef.current.pause();
+          }
+        }}
+      />
       {!isReady && (
         <button
           onClick={preloadAllAudio}
