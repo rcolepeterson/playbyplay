@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 // Utility to fetch file as Uint8Array (since we can't use @ffmpeg/util)
-async function fetchFile(file: File): Promise<Uint8Array> {
-  const arrayBuffer = await file.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
-}
+// async function fetchFile(file: File): Promise<Uint8Array> {
+//   const arrayBuffer = await file.arrayBuffer();
+//   return new Uint8Array(arrayBuffer);
+// }
 
 // Helper: format seconds as HH:MM:SS
 function formatTime(secs: number) {
@@ -158,7 +158,7 @@ export default function VideoTrimTool({
     setProcessing(true);
     setError(null);
     try {
-      const { name, type } = file;
+      const { name } = file;
       console.log(
         "[TRIM] Writing file to ffmpeg FS:",
         name,

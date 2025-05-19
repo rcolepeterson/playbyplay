@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState } from "react";
 
 import modes from "./modes";
 import generateContent from "./api";
@@ -333,6 +333,11 @@ export default function Process() {
                 <div className="mt-2">
                   Please use the trim tool below or select a different video.
                 </div>
+              </div>
+            )}
+            {trimFileError && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                {trimFileError}
               </div>
             )}
             <div className="flex flex-row gap-4 mb-2">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video } from "lucide-react";
 import Image from "next/image";
 //import TextToSpeech from "./TextToSpeech";
-import TextToSpeech from "./TTSEleven";
+//import TextToSpeech from "./TTSEleven";
 import { textToSpeech } from "./11TextSpeech";
 
 const premadeExamples = [
