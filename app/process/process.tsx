@@ -45,7 +45,9 @@ export default function Process() {
   const [showTrimTool, setShowTrimTool] = useState(false);
   const [pendingTrimFile, setPendingTrimFile] = useState<File | null>(null);
   const [trimFileError, setTrimFileError] = useState<string | null>(null); // NEW: error for trim file
-  const [trimmedDownloadUrl, setTrimmedDownloadUrl] = useState<string | null>(null); // NEW: for download link
+  const [trimmedDownloadUrl, setTrimmedDownloadUrl] = useState<string | null>(
+    null
+  ); // NEW: for download link
 
   // Helper to check if a file is a valid video (can load metadata)
   const checkVideoFile = (file: File): Promise<boolean> => {
@@ -325,7 +327,9 @@ export default function Process() {
                 </span>
                 <span className="text-sm text-gray-500 mt-1">
                   or{" "}
-                  <span className="underline text-blue-600">click to select</span>
+                  <span className="underline text-blue-600">
+                    click to select
+                  </span>
                 </span>
                 <span className="text-xs text-gray-400 mt-2">
                   MP4, MOV, or WebM &bull; Max 16s &bull; Max 20MB
