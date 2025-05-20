@@ -299,29 +299,62 @@ export default function Process() {
 
         {/* Only show upload instructions if no video is loaded */}
         {!vidUrl && (
-          <div className="mb-8 flex flex-col items-center justify-center">
-            <Input
-              type="file"
-              accept="video/*"
-              onChange={async (e) => {
-                setTrimmedDownloadUrl(null); // Clear previous download link
-                const file = (e.target as HTMLInputElement).files?.[0];
-                setTrimFileError(null);
-                if (file) {
-                  const valid = await checkVideoFile(file);
-                  if (valid) {
-                    setPendingTrimFile(file);
-                  } else {
-                    setPendingTrimFile(null);
-                    setTrimFileError(
-                      "Could not load video metadata. Please try a different file."
-                    );
+          <div className="mb-8 flex flex-col items-center justify-center w-full">
+            <label
+              htmlFor="video-upload"
+              className="w-full max-w-md aspect-video bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer transition hover:bg-gray-200 focus-within:ring-2 focus-within:ring-blue-400 mb-4 shadow-sm"
+            >
+              <div className="flex flex-col items-center justify-center py-8">
+                <svg
+                  width="48"
+                  height="48"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="text-blue-500 mb-2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                  />
+                </svg>
+                <span className="font-semibold text-lg text-gray-700">
+                  Drag & Drop your video
+                </span>
+                <span className="text-sm text-gray-500 mt-1">
+                  or{" "}
+                  <span className="underline text-blue-600">click to select</span>
+                </span>
+                <span className="text-xs text-gray-400 mt-2">
+                  MP4, MOV, or WebM &bull; Max 16s &bull; Max 20MB
+                </span>
+              </div>
+              <Input
+                id="video-upload"
+                type="file"
+                accept="video/*"
+                onChange={async (e) => {
+                  setTrimmedDownloadUrl(null); // Clear previous download link
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setTrimFileError(null);
+                  if (file) {
+                    const valid = await checkVideoFile(file);
+                    if (valid) {
+                      setPendingTrimFile(file);
+                    } else {
+                      setPendingTrimFile(null);
+                      setTrimFileError(
+                        "Could not load video metadata. Please try a different file."
+                      );
+                    }
                   }
-                }
-                uploadVideo(e);
-              }}
-              className="mb-4 max-w-xs"
-            />
+                  uploadVideo(e);
+                }}
+                className="hidden"
+              />
+            </label>
             {/* Enhanced error and guidance for too-long videos */}
             {errorMessage && errorMessage.includes("too long") && (
               <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded text-center max-w-md">
@@ -349,23 +382,6 @@ export default function Process() {
                 {errorMessage && errorMessage.includes("too long")
                   ? "Trim Video (required)"
                   : "Trim Video (optional)"}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  setPendingTrimFile(null);
-                  setShowTrimTool(false);
-                  setErrorMessage(null);
-                  setTrimFileError(null);
-                  // Also clear file input value if needed (optional, for better UX)
-                  const input = document.querySelector(
-                    'input[type="file"]'
-                  ) as HTMLInputElement;
-                  if (input) input.value = "";
-                }}
-                className="px-4 py-2 text-base font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300"
-              >
-                Choose Another Video
               </Button>
             </div>
             {/* Only show the drag-and-drop message if no video is selected */}
@@ -400,7 +416,32 @@ export default function Process() {
             )}
           </div>
         )}
-
+        {/* Show 'Choose Another Video' button only if a video is loaded or pendingTrimFile exists */}
+        {(vidUrl || pendingTrimFile) && (
+          <div className="flex justify-center mb-6">
+            <Button
+              type="button"
+              onClick={() => {
+                setPendingTrimFile(null);
+                setShowTrimTool(false);
+                setErrorMessage(null);
+                setTrimFileError(null);
+                setVidUrl(null);
+                setFile(null);
+                setTimecodeList(null);
+                setTrimmedDownloadUrl(null);
+                // Also clear file input value if needed (optional, for better UX)
+                const input = document.querySelector(
+                  'input[type="file"]'
+                ) as HTMLInputElement;
+                if (input) input.value = "";
+              }}
+              className="px-4 py-2 text-base font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300"
+            >
+              Choose Another Video
+            </Button>
+          </div>
+        )}
         {/* Video player and controls */}
         {vidUrl && !isLoadingVideo && !isLoading && (
           <>
