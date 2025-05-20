@@ -148,7 +148,7 @@ export default function ImprovedPlayback() {
             {vidUrl ? (
               <PreloadedTTSPlayer videoUrl={vidUrl} timecodes={timecodeList} />
             ) : (
-              <div className="w-full aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
+              <div className="w-1/2 aspect-video bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-400" />
               </div>
             )}
