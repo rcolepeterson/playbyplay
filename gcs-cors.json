@@ -1,7 +1,9 @@
 [
     {
         "origin": [
-            "http://localhost:3001"
+            "http://localhost:3001",
+            "https://playbyplay-l9i69wk6g-colepetersonwundermanthos-projects.vercel.app",
+            "https://playbyplay-three.vercel.app"
         ],
         "method": [
             "PUT",

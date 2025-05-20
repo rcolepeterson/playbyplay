@@ -396,8 +396,39 @@ export default function Process() {
                 >
                   Generate Commentary
                 </Button>
-                {/* Removed Download Key Moments button from here */}
+                {/* Always show trim button after video is selected */}
+                <Button
+                  type="button"
+                  onClick={() => setShowTrimTool(true)}
+                  className="px-4 py-2 text-base font-semibold"
+                >
+                  Trim Video
+                </Button>
               </div>
+              {/* Show trim tool if requested */}
+              {showTrimTool && pendingTrimFile && (
+                <div className="w-full mt-4">
+                  <VideoTrimTool
+                    file={pendingTrimFile}
+                    maxDuration={16}
+                    onTrimmed={(trimmedFile) => {
+                      setShowTrimTool(false);
+                      setPendingTrimFile(null);
+                      // Reset video state before uploading trimmed file
+                      setVidUrl(null);
+                      setFile(null);
+                      setTimecodeList(null);
+                      // Upload the trimmed file using the same logic
+                      uploadVideo(
+                        {
+                          preventDefault: () => {},
+                        } as any,
+                        trimmedFile
+                      );
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}
