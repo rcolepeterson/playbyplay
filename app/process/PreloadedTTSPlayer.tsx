@@ -32,6 +32,7 @@ export default function PreloadedTTSPlayer({
   const [currentMomentIdx, setCurrentMomentIdx] = useState<number | null>(null);
   const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
   const isDebug = process.env.NEXT_PUBLIC_DEBUG_MODE === "true";
+  const doDownload = false;
 
   // Preload all TTS audio for the timecodes
   const preloadAllAudio = async () => {
@@ -152,85 +153,89 @@ export default function PreloadedTTSPlayer({
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="w-full rounded-lg mb-4 bg-black"
-        onEnded={() => {
-          // When video ends, reset to just before the end so it doesn't go to black
-          if (videoRef.current) {
-            const almostEnd = videoRef.current.duration
-              ? Math.max(0, videoRef.current.duration - 0.05)
-              : 0;
-            videoRef.current.currentTime = almostEnd;
-            videoRef.current.pause();
-          }
-        }}
-      />
-      {/* Only show Key Moments list here if not hidden */}
-      {!hideKeyMomentsList && (
-        <div className="w-full max-w-xl mt-4">
-          <h2 className="text-xl font-bold mb-2">Key Moments</h2>
-          <ul className="space-y-2">
-            {timecodes.map((tc, i) => (
-              <li
-                key={i}
-                className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
-                  effectiveCurrentMomentIdx === i
-                    ? "bg-yellow-300 text-black font-bold"
-                    : "hover:bg-secondary"
-                }`}
-                onClick={() => {
-                  if (videoRef.current)
-                    videoRef.current.currentTime = timeToSecs(tc.time);
-                }}
-              >
-                <span className="font-semibold">{tc.time}</span> - {tc.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {!isReady && (
-        <button
-          onClick={preloadAllAudio}
-          disabled={isLoading}
-          className="px-6 py-2 text-base font-semibold bg-blue-600 text-white rounded mb-2"
-        >
-          {isLoading ? "Loading TTS..." : "Load & Play"}
-        </button>
-      )}
-      {isReady && (
-        <button
-          onClick={handlePlay}
-          className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded my-2"
-        >
-          Play Experience
-        </button>
-      )}
-      {error && <div className="text-red-600 mb-2">{error}</div>}
-      {/* Only show Download Key Moments if debug mode is true */}
-      {isDebug && (
-        <button
-          onClick={() => {
-            const data = { videoPath: videoUrl, timecodeList: timecodes };
-            const dataStr =
-              "data:text/json;charset=utf-8," +
-              encodeURIComponent(JSON.stringify(data));
-            const downloadAnchorNode = document.createElement("a");
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "key_moments.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            alert("Key moments have been downloaded.");
+    <div className="flex flex-col lg:flex-row justify-start  items-start gap-x-8">
+      <div className="lg:w-1/2">
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          className="w-full rounded-lg mb-4 bg-black"
+          onEnded={() => {
+            // When video ends, reset to just before the end so it doesn't go to black
+            if (videoRef.current) {
+              const almostEnd = videoRef.current.duration
+                ? Math.max(0, videoRef.current.duration - 0.05)
+                : 0;
+              videoRef.current.currentTime = almostEnd;
+              videoRef.current.pause();
+            }
           }}
-          className="px-6 py-2 text-base font-semibold mt-4 bg-blue-600 text-white rounded"
-        >
-          Download Key Moments (JSON)
-        </button>
-      )}
+        />
+      </div>
+      <div className="lg:w-1/2">
+        {/* Only show Key Moments list here if not hidden */}
+        {!hideKeyMomentsList && (
+          <div className="w-full max-w-xl my-2">
+            <h2 className="text-xl font-bold mb-2">Key Moments</h2>
+            <ul className="space-y-2">
+              {timecodes.map((tc, i) => (
+                <li
+                  key={i}
+                  className={`p-2 rounded cursor-pointer transition-colors duration-200 ${
+                    effectiveCurrentMomentIdx === i
+                      ? "bg-yellow-300 text-black font-bold"
+                      : "hover:bg-secondary"
+                  }`}
+                  onClick={() => {
+                    if (videoRef.current)
+                      videoRef.current.currentTime = timeToSecs(tc.time);
+                  }}
+                >
+                  <span className="font-semibold">{tc.time}</span> - {tc.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {!isReady && (
+          <button
+            onClick={preloadAllAudio}
+            disabled={isLoading}
+            className="px-6 py-2 text-base font-semibold bg-blue-600 text-white rounded mb-2"
+          >
+            {isLoading ? "Loading TTS..." : "Load & Play"}
+          </button>
+        )}
+        {isReady && (
+          <button
+            onClick={handlePlay}
+            className="px-6 py-2 text-base font-semibold bg-green-600 text-white rounded my-2"
+          >
+            Play Experience
+          </button>
+        )}
+        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {/* Only show Download Key Moments if debug mode is true */}
+        {isDebug && doDownload && (
+          <button
+            onClick={() => {
+              const data = { videoPath: videoUrl, timecodeList: timecodes };
+              const dataStr =
+                "data:text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(data));
+              const downloadAnchorNode = document.createElement("a");
+              downloadAnchorNode.setAttribute("href", dataStr);
+              downloadAnchorNode.setAttribute("download", "key_moments.json");
+              document.body.appendChild(downloadAnchorNode);
+              downloadAnchorNode.click();
+              downloadAnchorNode.remove();
+              alert("Key moments have been downloaded.");
+            }}
+            className="px-6 py-2 text-base font-semibold mt-4 bg-blue-600 text-white rounded"
+          >
+            Download Key Moments (JSON)
+          </button>
+        )}
+      </div>
       {/* Preload all audio elements, but keep them hidden */}
       {audioUrls.map((url, i) => (
         <audio

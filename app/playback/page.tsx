@@ -137,17 +137,12 @@ export default function ImprovedPlayback() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Video Play By Play</CardTitle>
-        </CardHeader>
-      </Card>
       {error && (
         <Card className="mb-6 border-red-500">
           <CardContent className="text-red-500 p-4">{error}</CardContent>
         </Card>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="">
         <Card>
           <CardContent className="p-4">
             {vidUrl ? (
@@ -173,7 +168,7 @@ export default function ImprovedPlayback() {
                   alt={example.title}
                   width={300}
                   height={200}
-                  className="rounded-lg mb-2"
+                  className="rounded-lg mb-2 w-full"
                 />
                 <h3 className="font-semibold text-lg">{example.title}</h3>
                 <Button
