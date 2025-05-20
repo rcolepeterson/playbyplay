@@ -45,6 +45,7 @@ export default function Process() {
   const [showTrimTool, setShowTrimTool] = useState(false);
   const [pendingTrimFile, setPendingTrimFile] = useState<File | null>(null);
   const [trimFileError, setTrimFileError] = useState<string | null>(null); // NEW: error for trim file
+  const [trimmedDownloadUrl, setTrimmedDownloadUrl] = useState<string | null>(null); // NEW: for download link
 
   // Helper to check if a file is a valid video (can load metadata)
   const checkVideoFile = (file: File): Promise<boolean> => {
@@ -123,7 +124,7 @@ export default function Process() {
     // Validate file size and duration before proceeding
     try {
       const validation = await validateVideoFile(videoFile, {
-        maxSizeMB: 50,
+        maxSizeMB: 20,
         maxDurationSec: 16,
       });
       if (!validation.valid) {
@@ -256,10 +257,31 @@ export default function Process() {
         <h1 className="text-4xl font-bold mb-4 text-center">
           Video Play-by-Play Generator
         </h1>
-        <p className="text-xl mb-8 text-center">
+        <p className="text-xl mb-2 text-center">
           Upload your video and get instant play-by-play commentary. Analyze key
           moments, generate summaries, and more!
         </p>
+        <p className="text-base mb-8 text-center text-gray-600">
+          <strong>Note:</strong> Your video must be{" "}
+          <span className="font-semibold">16 seconds or less</span> and{" "}
+          <span className="font-semibold">under 20MB</span> in size.
+        </p>
+
+        {/* Download trimmed video if available */}
+        {trimmedDownloadUrl && (
+          <div className="mb-6 flex flex-col items-center">
+            <a
+              href={trimmedDownloadUrl}
+              download="trimmed_video.mp4"
+              className="px-4 py-2 mb-2 bg-green-600 text-white rounded font-semibold shadow hover:bg-green-700 transition"
+            >
+              Download Trimmed Video
+            </a>
+            <span className="text-xs text-gray-500">
+              You can save your trimmed video for future use.
+            </span>
+          </div>
+        )}
 
         {videoError && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -282,6 +304,7 @@ export default function Process() {
               type="file"
               accept="video/*"
               onChange={async (e) => {
+                setTrimmedDownloadUrl(null); // Clear previous download link
                 const file = (e.target as HTMLInputElement).files?.[0];
                 setTrimFileError(null);
                 if (file) {
@@ -359,6 +382,7 @@ export default function Process() {
                   onTrimmed={(trimmedFile) => {
                     setShowTrimTool(false);
                     setPendingTrimFile(null);
+                    setTrimmedDownloadUrl(URL.createObjectURL(trimmedFile)); // Set download link
                     // Reset video state before uploading trimmed file
                     setVidUrl(null);
                     setFile(null);
@@ -394,15 +418,18 @@ export default function Process() {
                   disabled={isLoading}
                   className="px-6 py-2 text-base font-semibold"
                 >
-                  Generate Commentary
+                  Generate AI Commentary
                 </Button>
                 {/* Always show trim button after video is selected */}
                 <Button
                   type="button"
-                  onClick={() => setShowTrimTool(true)}
+                  onClick={() => {
+                    setShowTrimTool(true);
+                    setTrimmedDownloadUrl(null); // Clear previous download link
+                  }}
                   className="px-4 py-2 text-base font-semibold"
                 >
-                  Trim Video
+                  Trim & Download Video
                 </Button>
               </div>
               {/* Show trim tool if requested */}
@@ -414,6 +441,7 @@ export default function Process() {
                     onTrimmed={(trimmedFile) => {
                       setShowTrimTool(false);
                       setPendingTrimFile(null);
+                      setTrimmedDownloadUrl(URL.createObjectURL(trimmedFile)); // Set download link
                       // Reset video state before uploading trimmed file
                       setVidUrl(null);
                       setFile(null);
