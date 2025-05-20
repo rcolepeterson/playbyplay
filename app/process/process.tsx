@@ -165,20 +165,8 @@ export default function Process() {
       return;
     }
 
+    // --- GCS UPLOAD LOGIC START ---
     setVidUrl(URL.createObjectURL(videoFile));
-    // Read file as base64
-    const toBase64 = (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove the data:...;base64, prefix
-          const base64 = result.split(",")[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
     // Extract video duration using a temporary video element
     const getDuration = (file: File): Promise<number> => {
       return new Promise((resolve) => {
@@ -192,22 +180,50 @@ export default function Process() {
       });
     };
     try {
-      const [base64Video, duration] = await Promise.all([
-        toBase64(videoFile),
-        getDuration(videoFile),
-      ]);
+      // 1. Get signed URL from API
+      const res = await fetch("/api/gcs-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: videoFile.name,
+          contentType: videoFile.type,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+      const { url } = await res.json();
+      // 2. Upload file directly to GCS
+      const uploadRes = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": videoFile.type,
+        },
+        body: videoFile,
+      });
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload video to Google Cloud Storage");
+      }
+      // 3. Set file state with GCS URL (public URL pattern)
+      const gcsUrl = `https://storage.googleapis.com/my-playbyplay-videos/${encodeURIComponent(
+        videoFile.name
+      )}`;
+      const duration = await getDuration(videoFile);
       setFile({
         name: videoFile.name,
+        uri: gcsUrl,
         mimeType: videoFile.type,
-        base64Video,
         duration,
       });
-    } catch {
-      setErrorMessage("Failed to read video file. Please try again.");
+    } catch (err: any) {
+      setErrorMessage(
+        err.message || "Failed to upload video. Please try again."
+      );
       setIsLoadingVideo(false);
       return;
     }
     setIsLoadingVideo(false);
+    // --- GCS UPLOAD LOGIC END ---
   };
 
   // Only show PreloadedTTSPlayer if video and timecodes are ready

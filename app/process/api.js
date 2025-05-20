@@ -1,5 +1,6 @@
 "use server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { fetchFileFromGCS } from "./gcs-utils";
 
 const systemInstruction = `Generate dynamic, high-energy play-by-play commentary in the style of an excited live TV sports broadcaster. The commentary should be engaging, concise, and aligned with the timing of the video, regardless of the video content.
 
@@ -219,6 +220,21 @@ export default async ({ file }) => {
   }
 
   try {
+    // If file.uri is a GCS URL, fetch the file and convert to base64
+    let base64Video = file.base64Video;
+    if (
+      !base64Video &&
+      file.uri &&
+      file.uri.includes("storage.googleapis.com")
+    ) {
+      // Extract filename from GCS URL
+      const match = file.uri.match(/my-playbyplay-videos\/(.+)$/);
+      if (!match) throw new Error("Could not extract filename from GCS URL");
+      const filename = decodeURIComponent(match[1]);
+      const buffer = await fetchFileFromGCS(filename);
+      base64Video = buffer.toString("base64");
+    }
+
     // Debug: log the file.uri to ensure it's a full public URL
     console.log("Gemini file.uri for API call:", file.uri);
 
@@ -236,12 +252,11 @@ export default async ({ file }) => {
               {
                 text: `${prompt} The video is ${file.duration} seconds long. Describe specific visual elements you see, such as colors, numbers of people, types of movements, or notable objects. Capture the energy progression and any dramatic shifts in the video.`,
               },
-              // CHANGE: use inlineData instead of fileData
-              file.base64Video
+              base64Video
                 ? {
                     inlineData: {
                       mimeType: file.mimeType,
-                      data: file.base64Video,
+                      data: base64Video,
                     },
                   }
                 : { fileData: { mimeType: file.mimeType, fileUri: file.uri } },
