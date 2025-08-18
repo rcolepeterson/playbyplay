@@ -46,7 +46,7 @@ excitementLevel (1-5, integer)
 
 ## Demo Video
 
-[Link to your demo video]
+[\[demo video](https://www.loom.com/share/ecc4b2e67a3b4fb8b0e2d53d60d170e4?sid=e30613e2-5252-46d4-9afb-c238083af8c3)]
 
 ## Key Challenges & Learnings
 
@@ -65,7 +65,3 @@ excitementLevel (1-5, integer)
 
 - Turns any video into an exciting, shareable sports-style highlight reel.
 - Showcases skills in AI integration, prompt engineering, and user-focused design.
-
----
-
-Let me know if you want to further customize any section or add more technical details!
