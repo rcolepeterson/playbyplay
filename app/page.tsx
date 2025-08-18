@@ -43,6 +43,7 @@ export default function Home() {
               <Image
                 src="/file.svg"
                 alt="Upload"
+                aria-label="Upload video icon"
                 width={48}
                 height={48}
                 className="mx-auto mt-2"
@@ -61,6 +62,7 @@ export default function Home() {
               <Image
                 src="/globe.svg"
                 alt="AI"
+                aria-label="AI commentary icon"
                 width={48}
                 height={48}
                 className="mx-auto mt-2"
@@ -79,6 +81,7 @@ export default function Home() {
               <Image
                 src="/window.svg"
                 alt="Highlights"
+                aria-label="Highlights icon"
                 width={48}
                 height={48}
                 className="mx-auto mt-2"
