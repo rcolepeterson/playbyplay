@@ -56,6 +56,10 @@ excitementLevel (1-5, integer)
 - Balanced technical integration (React, AI APIs) with creative storytelling.
 - Learned to generate engaging commentary for a wide range of video types, not just sports.
 
+## Demo Password
+
+This project uses an environment variable (`NEXT_PUBLIC_SITE_PASSWORD`) for the site password. This is for demo purposes only and is not intended as a secure authentication method for production use. Set your own password in your `.env.local` file.
+
 ## Running Locally
 
 1. Clone the repository.

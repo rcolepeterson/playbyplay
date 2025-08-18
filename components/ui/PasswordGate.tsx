@@ -10,6 +10,9 @@ export default function PasswordGate({
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
 
+  // Read password from environment variable (for demo only)
+  const sitePassword = process.env.NEXT_PUBLIC_SITE_PASSWORD || "demo";
+
   if (!unlocked) {
     return (
       <div className="w-full max-w-xs mx-auto mt-32 bg-white rounded-xl shadow-lg p-8 flex flex-col items-center min-h-[300px]">
@@ -25,7 +28,7 @@ export default function PasswordGate({
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              if (input === "axis") setUnlocked(true);
+              if (input === sitePassword) setUnlocked(true);
               else setError("Incorrect password");
             }
           }}
@@ -34,7 +37,7 @@ export default function PasswordGate({
         <button
           className="w-full bg-blue-600 text-white font-semibold rounded px-4 py-2 mt-2 hover:bg-blue-700 transition"
           onClick={() => {
-            if (input === "axis") setUnlocked(true);
+            if (input === sitePassword) setUnlocked(true);
             else setError("Incorrect password");
           }}
         >
