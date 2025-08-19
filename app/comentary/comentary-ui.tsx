@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 export default function TestTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Replace these with your Azure subscription key and region
-  const AZURE_SUBSCRIPTION_KEY = "7bf18fdb4502402fb60770ae77c7b68b";
-  const AZURE_REGION = "eastus2";
+  // Use environment variables for Azure subscription key and region
+  const AZURE_SUBSCRIPTION_KEY = process.env.NEXT_PUBLIC_AZURE_SUBSCRIPTION_KEY || "";
+  const AZURE_REGION = process.env.NEXT_PUBLIC_AZURE_REGION || "";
 
   const speakAzure = async (
     text: string,

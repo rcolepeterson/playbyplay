@@ -1,3 +1,4 @@
+// For a full explanation of the AI commentary pipeline and AI model double-call process, see the README (section: "How the AI Commentary Pipeline Works").
 "use server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { fetchFileFromGCS } from "./gcs-utils";

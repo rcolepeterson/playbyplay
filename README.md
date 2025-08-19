@@ -14,6 +14,10 @@ This web app lets users upload any video and automatically generates dynamic, hi
 - Google Cloud Storage (GCS)
 - Custom video editing tools (trim/cut)
 
+## How the AI Commentary Pipeline Works
+
+When a user uploads a video, the app sends a prompt to Google Gemini to generate high-energy, play-by-play commentary as a JSON array, with each entry containing a time, text, and excitement level. Then, a second call is made to Gemini to review and optimize that JSON commentary—making it more concise, energetic, and well-timed for text-to-speech playback. Robust extraction and fallback logic ensures the app always produces a usable JSON array, even if the AI response varies in format.
+
 ## How it Works
 
 1. User uploads a video.
