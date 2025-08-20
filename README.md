@@ -79,3 +79,5 @@ This project uses an environment variable (`NEXT_PUBLIC_SITE_PASSWORD`) for the 
 
 - Turns any video into an exciting, shareable sports-style highlight reel.
 - Showcases skills in AI integration, prompt engineering, and user-focused design.
+
+v1
