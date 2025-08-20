@@ -1,3 +1,8 @@
+/*
+core workflow page for uploading, validating, trimming, and processing videos, 
+then generating and displaying AI commentary with synchronized TTS playback.
+*/
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -47,7 +52,7 @@ export default function Process() {
   const [trimFileError, setTrimFileError] = useState<string | null>(null); // NEW: error for trim file
   const [trimmedDownloadUrl, setTrimmedDownloadUrl] = useState<string | null>(
     null
-  ); // NEW: for download link
+  );
 
   // Helper to check if a file is a valid video (can load metadata)
   const checkVideoFile = (file: File): Promise<boolean> => {

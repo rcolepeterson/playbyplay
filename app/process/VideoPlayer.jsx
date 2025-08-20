@@ -2,13 +2,13 @@
 
 import TextToSpeechTwo from "./TextToSpeechTwo"; // Import the TTS component
 import { useCallback, useEffect, useState, useMemo } from "react";
-import c from "classnames";
+//import c from "classnames";
 import { timeToSecs } from "./utils";
 
-const formatTime = (t) =>
-  `${Math.floor(t / 60)}:${Math.floor(t % 60)
-    .toString()
-    .padStart(2, "0")}`;
+// const formatTime = (t) =>
+//   `${Math.floor(t / 60)}:${Math.floor(t % 60)
+//     .toString()
+//     .padStart(2, "0")}`;
 
 export default function VideoPlayer({
   url,
@@ -16,7 +16,6 @@ export default function VideoPlayer({
   requestedTimecode,
   isLoadingVideo,
   videoError,
-  jumpToTimecode,
 }) {
   const [video, setVideo] = useState(null);
   const [duration, setDuration] = useState(0);
@@ -25,8 +24,8 @@ export default function VideoPlayer({
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [currentCaption, setCurrentCaption] = useState(null);
   const [currentExcitmentLevel, setCurrentExcitmentLevel] = useState(null);
-  const currentSecs = duration * scrubberTime || 0;
-  const currentPercent = scrubberTime * 100;
+  // const currentSecs = duration * scrubberTime || 0;
+  // const currentPercent = scrubberTime * 100;
   const timecodeListReversed = useMemo(
     () => timecodeList?.toReversed(),
     [timecodeList]

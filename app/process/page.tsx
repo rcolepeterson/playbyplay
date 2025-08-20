@@ -1,9 +1,5 @@
 import Process from "./process";
 const Page = () => {
-  return (
-    <div>
-      <Process />
-    </div>
-  );
+  return <Process />;
 };
 export default Page;

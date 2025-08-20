@@ -1,3 +1,9 @@
+/*
+preloads text-to-speech (TTS) audio for each key moment in a video, 
+enabling synchronized playback of AI-generated commentary alongside the video.
+Some debug stuff too, for grabbing JSON to test with.
+*/
+
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from "react";

@@ -6,7 +6,7 @@ export const textToSpeech = async (
   debug?: boolean
 ) => {
   if (debug) {
-    // In debug mode, use browser TTS (SpeechSynthesis API) for audible feedback
+    // In debug mode, use browser TTS (SpeechSynthesis API). So we dont pay. :)
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       const utterance = new window.SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
