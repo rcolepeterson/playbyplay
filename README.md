@@ -1,6 +1,8 @@
 # Play-by-Play Video Commentary App
 
-This project includes a custom Copilot instructions file to ensure AI-assisted coding aligns with my standards and showcases my commitment to modern, professional development practices.
+This project is a proof of concept (POC) built for fun, learning, and experimentation as part of my creative development work. It includes a custom Copilot instructions file to ensure AI-assisted coding aligns with my standards and showcases my commitment to modern, professional practices.
+
+What it does: This web app lets users upload any video and automatically generates dynamic, high-energy play-by-play commentary in the style of a live sports broadcaster.
 
 **What it does:**
 This web app lets users upload any video and automatically generates dynamic, high-energy play-by-play commentary in the style of a live sports broadcaster—no matter what’s happening in the video.
