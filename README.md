@@ -54,6 +54,10 @@ excitementLevel (1-5, integer)
 
 [\[demo video](https://www.loom.com/share/ecc4b2e67a3b4fb8b0e2d53d60d170e4?sid=e30613e2-5252-46d4-9afb-c238083af8c3)]
 
+## TODO
+
+- Clean up the video trimming UI and flow for a smoother, more intuitive user experience.
+
 ## Key Challenges & Learnings
 
 - Developed advanced prompt engineering to control AI tone, timing, and narrative arc.
